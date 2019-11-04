@@ -301,7 +301,6 @@ class: spacious
 - Find k nearest neighbors that have non-missing values.
 - Fill in all missing values using the average of the
 neighbors.
-- PR in scikit-learn: https://github.com/scikit-learn/scikit-learn/pull/9212
 
 ???
 FIXME illustration
@@ -317,7 +316,7 @@ distances.
 ---
 .smaller[
 ```python
-# not merged yet!
+
 knn_pipe = make_pipeline(KNNImputer(), StandardScaler(), LogisticRegression())
 np.mean(scores)
 ```
@@ -340,7 +339,6 @@ np.mean(scores)
 - Iterate: retrain after filling in
 - IterativeImputer in next sklearn release
 
-https://github.com/scikit-learn/scikit-learn/issues/11259
 .smaller[
 ```python
 rf_imp = IterativeImputer(predictor=RandomForestRegressor(n_estimators=100))

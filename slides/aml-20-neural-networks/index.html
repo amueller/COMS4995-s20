@@ -809,7 +809,7 @@ from sklearn.model_selection import GridSearchCV
 pipe = make_pipeline(StandardScaler(), MLPClassifier(solver="lbfgs",
                      random_state=1))
 param_grid = {'mlpclassifier__alpha': np.logspace(-3, 3, 7)}
-grid = GridSearchCV(pipe, param_grid, cv=5)
+grid = GridSearchCV(pipe, param_grid)
 ```]
 
 .smaller[
@@ -847,7 +847,7 @@ param_grid = {'mlpclassifier__hidden_layer_sizes':
               [(10,), (50,), (100,), (500,), (10, 10), (50, 50), (100, 100), (500,
               500)]
              }
-grid = GridSearchCV(pipe, param_grid, cv=5)
+grid = GridSearchCV(pipe, param_grid)
 grid.fit(X_train, y_train)
 ```]
 .center[![:scale 40%](images/search_hidden_layers_plot.png)]

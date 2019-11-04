@@ -347,7 +347,7 @@ def make_model(optimizer="adam", hidden_size=32):
 clf = KerasClassifier(make_model)
 param_grid = {'epochs': [1, 5, 10],  # epochs is fit parameter, not in make_model!
               'hidden_size': [32, 64, 256]}
-grid = GridSearchCV(clf, param_grid=param_grid, cv=5)
+grid = GridSearchCV(clf, param_grid=param_grid)
 grid.fit(X_train, y_train)
 ```
 ]

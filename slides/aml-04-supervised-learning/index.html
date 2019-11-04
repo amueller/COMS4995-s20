@@ -188,7 +188,7 @@ Then, we can use knn.score to make predictions on the test data, and
 compare them against the true labels y_test.
 
 For classification models, the score method will always compute
-accuracy. 
+accuracy.
 
 Just for illustration purposes, I also call the predict method here.
 The predict method is what's used to make predictions on any dataset.
@@ -365,7 +365,7 @@ and 25% test data,
 import the nearest centroid model, fit it on the training set, and
 compute the accuracy on the test set.
 In this case, the fit method computes the mean or centroid of each class
-and stores it in the nc object, while for prediction 
+and stores it in the nc object, while for prediction
 
 Questions so far?
 ---
@@ -764,7 +764,7 @@ for i in neighbors:
     knn = KNeighborsClassifier(n_neighbors=i)
     scores = cross_val_score(knn, X_train, y_train, cv=10)
     cross_val_scores.append(np.mean(scores))
-    
+
 print("best cross-validation score: {:.3f}".format(np.max(cross_val_scores)))
 best_n_neighbors = neighbors[np.argmax(cross_val_scores)]
 print("best n_neighbors:", best_n_neighbors)
@@ -1125,7 +1125,7 @@ like, or we can use Shuffle split.
 ```python
 from sklearn.model_selection import cross_validate
 res = cross_validate(KNeighborsClassifier(), X, y, return_train_score=True,
-                    cv=5, scoring=["accuracy", "roc_auc"])
+                     scoring=["accuracy", "roc_auc"])
 res_df = pd.DataFrame(res)
 ```
 ```

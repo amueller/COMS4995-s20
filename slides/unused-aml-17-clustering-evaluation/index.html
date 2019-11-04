@@ -91,7 +91,7 @@ really in any practical application.
 I still want to talk you through how these methods work.
 
 One thing to keep in mind for all the cluster evaluation metrics is that
-they compare partitions, not labellings. While clustering outcomes in 
+they compare partitions, not labellings. While clustering outcomes in
 scikit-learn (and other libraries) are always given as integers, you
 don't want to compare the actual integers, as you do in supervised learning.
 You want to compare the partitions given by the cluster labels.
@@ -172,7 +172,7 @@ For clusterings `$X_i$` and `$Y_j$`, `$n_{ij}=|X_i \cap Y_j|$`
     \ldots&
     b_s&
     \end{array}$$`
-    
+
 
 
 ???
@@ -197,7 +197,7 @@ clusterings with different numbers of clusters. FIXME needs
 example
 
 Now that we have this basic representation of cluster
-overlap, we can define derived metrics 
+overlap, we can define derived metrics
 ---
 # Contingency Matrix
 - Both of these mean identical partitions:
@@ -407,7 +407,7 @@ Now let's talk about unsupervised evaluation. So these are
 often a bit vaguer because you need to define what is a good
 clustering given the data and the partition. I find them a
 little bit less helpful. But you can actually use them in
-practice. 
+practice.
 ---
 
 # Silhouette Score
@@ -421,7 +421,7 @@ practice.
 
 - For whole clustering: average over all samples
 
-- Prefers compact clusters (like k-means) 
+- Prefers compact clusters (like k-means)
 ???
 
 One of the classical ones is the silhouette score. The
@@ -430,7 +430,7 @@ distance to samples in the nearest cluster minus the mean
 distance of two samples in the same cluster. This score can
 be computed for every data point. If you want to do is for
 the whole partition, you just average this over all the
-samples. 
+samples.
 
 One of the downsides of this is that it prefers compact
 clusters and not complex cluster shapes. Basically, KMeans
@@ -447,7 +447,7 @@ ground truth is one-half moon versus the other half moon,
 they are two different labels. And the silhouette score is
 completely unsupervised and measures the compactness of the
 cluster in a sense. And you can see that they basically
-completely disagree. 
+completely disagree.
 
 In the top left, since the clusters are quite compact, the
 silhouette score is the highest of the bunch, even though
@@ -473,7 +473,7 @@ are there?
 It’s drawn from four Gaussians. And actually, instead of
 just looking at the silhouette score, average over
 everything, I can look at the individual silhouette score of
-the points. 
+the points.
 
 ---
 
@@ -504,13 +504,13 @@ then it indicates, there's a couple of samples with very
 high silhouette score, then there's a sudden drop, and then
 there are some more points. This might also indicate that
 there are maybe two clusters within one cluster, which is
-actually the case here. 
+actually the case here.
 
 And if you over partition your data, you might get something
 like the red one in the fourth diagram, where you don't have
 a nice curve, indicating that the red has a very small
 silhouette score compared to the other ones and also, they
-basically fall off very quickly. 
+basically fall off very quickly.
 
 
 ---
@@ -526,7 +526,7 @@ dataset. So this is generated as a mixture of 10 Gaussians,
 that doesn't mean that 10 is a good clustering. I think
 probably 5 would be my best guess. But it's really there's
 not really a right answer. There's not very clear distinct
-clusters. 
+clusters.
 ---
 .center[
 ![:scale 60%](images/more_silhouette_plots.png)
@@ -534,7 +534,7 @@ clusters.
 
 ???
 We can also look at the silhouette score for this. Looking
-at these, it's very hard to say, what is a good clustering. 
+at these, it's very hard to say, what is a good clustering.
 
 Q: If the score can’t help us why are we using it?
 
@@ -580,7 +580,7 @@ There's one other measure that I want to talk about called
 cluster stability. Cluster stability is not really a simple
 measure of how good is a partition, but it's more of how
 good is a particular parameter setting, or how good is a
-particular algorithm. 
+particular algorithm.
 
 The idea behind cluster stability is that if you changed
 your data a little bit and your clustering is good then it
@@ -595,7 +595,7 @@ single partition or comparing two partitions, instead you're
 looking at an algorithm and you're adding noise into the
 algorithm, and you're figuring out are the results stable.
 If the results are stable, it's good, if the results are not
-stable, it's not so good. 
+stable, it's not so good.
 
 
 
@@ -626,7 +626,7 @@ horizontally or vertically, so it's not going to be very
 stable. If I pick two large number of clusters, it will
 probably find the four clusters, but then it will randomly
 split up one of them. But it will split up a different one
-every time and so this will also not be stable. 
+every time and so this will also not be stable.
 
 But if I asked for four clusters, the four clusters will
 always be the same independent of a bootstrap sampling or
@@ -667,14 +667,14 @@ repeatedly fitting the clustering algorithm to do this. I
 want to make sure that I do this in the order of the
 original dataset. So for each original sample, either I have
 minus one, if it wasn't part of the bootstrap, or have the
-cluster labeled if it was a part. 
+cluster labeled if it was a part.
 
 And then now for each pair of clusters that I did, I look at
 the samples that are both bootstrap samples and the
 intersection of indices. And then I look at, in this case,
 adjusted rand score between the two partitions. And then, in
 the end, I compute the mean over all these pairs of
-partitions. 
+partitions.
 
 So here, I created a bunch of partitions randomly and I
 computed the rand score between all pairs of the partitions
@@ -682,7 +682,7 @@ and then I computed mean.
 
 The idea is, if they are very consistent, then the adjusted
 rand score between all different pairs will be high and so
-the final number will be high. 
+the final number will be high.
 
 
 
@@ -698,13 +698,13 @@ Here, I look at KMeans with 10 clusters. You can actually
 see that the cluster stability here is 1 for the three in
 the top row because points in each of them are closer
 together than the other points. But then if I do five or
-more clusters it becomes less stable. 
+more clusters it becomes less stable.
 
 This depends on how I initialized my KMeans. I did the
 KMeans++ initialization and restarted it a bunch of times.
 If I do random initialization and don't do restarts, then
 everything will be slightly less stable because of the
-randomness of KMeans. 
+randomness of KMeans.
 
 ---
 .center[![:scale 80%](images/cluster_stability_2.png)]
@@ -727,7 +727,7 @@ data.
 ???
 Here is the digit dataset looking at different scores. You
 can see that for ARI is 12, stability is 8 and for
-silhouette score, it's 16. 
+silhouette score, it's 16.
 
 You can see that the silhouette score is pretty noisy. The
 stability goes down pretty rapidly if you add too many
@@ -757,7 +757,7 @@ noise.
 Overall, I probably like KMeans the best. It has the same
 score (10) as agglomerative at its peak, which is a
 reasonable score. DBSCAN doesn't seem to be able to find any
-stable clusters with any of the settings. 
+stable clusters with any of the settings.
 
 ---
 # Adult Dataset
@@ -767,7 +767,7 @@ stable clusters with any of the settings.
 ???
 This is the adult dataset stating if adults are making more
 or less than 50k a year. This is not very nice to cluster
-since it has a lot of categorical data. 
+since it has a lot of categorical data.
 
 I ran KMeans and KMeans probably will not do that well on
 this kind of data. But what I found interesting is that the
@@ -790,7 +790,7 @@ So if you try to cluster the original input space, there are
 no stable clusters. I mean, this is also something I can
 find out by using the stability score, for example. After
 computing, I can see that the ARI and stability behave
-similarly while the silhouette score is quite different. 
+similarly while the silhouette score is quite different.
 ---
 class:spacious
 #Qualitative Evaluation(aka eyeballing)
@@ -803,7 +803,7 @@ class:spacious
 
 ???
 Eyeballing the data is the most important thing about
-clustering. 
+clustering.
 
 Supervised and unsupervised scores sometimes can be helpful,
 but I think what you really usually want out of clustering
@@ -811,7 +811,7 @@ is doing explorative data analysis. So if I use my stability
 score and find five is the perfect number for KMeans on a
 dataset, what does that tell me? Probably not that much.
 What I'm interested in is, what are the five clusters in my
-dataset and do they mean something? 
+dataset and do they mean something?
 
 The things that I usually do is look at low dimensional
 visualizations, look at individual points and look at
@@ -834,10 +834,10 @@ DBSCAN doesn't find the things that I think would be the
 clusters and there's like a big orange cluster that’s all
 over the place and the PCA is also all over the place while
 agglomerative and KMeans are more localized, both in the PCA
-and in the t-SNE. 
+and in the t-SNE.
 
 Unlike DBSCAN, Agglomerative and KMeans seem to be doing
-something reasonable, that I can look into more. 
+something reasonable, that I can look into more.
 
 ---
 # K-Means cluster centers
@@ -863,14 +863,14 @@ centers, I can plot them and therefore, I can visualize
 individual points in a meaningful way. If you have a
 100-dimensional feature vector usually you cannot visualize
 them in a meaningful way. This is not usually what you can
-do. 
+do.
 
 But here, in this case, where we have these images, we can
 look at the cluster centers and they actually seem to be
 quite natural. Apart from the two in the last column, the
 rest of them looks pretty clear. So this looks like a
 reasonable clustering. And it seems to have reasonably
-discovered the digits and the data themselves. 
+discovered the digits and the data themselves.
 
 ---
 
@@ -881,7 +881,7 @@ discovered the digits and the data themselves.
 ???
 So for agglomerative clustering and DBSCAN, you can't do
 that, because there are no cluster centers. So what I like
-to do instead is just pick random points from the clusters. 
+to do instead is just pick random points from the clusters.
 
 In this example with 10 clusters, each column corresponds to
 a cluster and the rows are just random samples from the
@@ -901,20 +901,20 @@ And most of these look pretty natural to me.
 
 ???
 I did the same thing for DBSCAN and I showed the number of
-points in this cluster. 
+points in this cluster.
 
 But here, you can see this is like a very specialized
 clustered, it only has 27 samples on it. This is also a very
 specialized cluster since it has the 7s with the hook on the
 front. The third column, which has nearly 1000 data points,
 clearly has all different digits in it. So this is not very
-satisfactory. 
+satisfactory.
 
 Basically, I looked at three different algorithms, looked at
 three different parameters, looked at stability scores, and
 looked at 2D visualizations and data points. So now, I have
 a relatively good idea what these three algorithms did. This
-was basically for all for exploratory data analysis. 
+was basically for all for exploratory data analysis.
 
 ---
 
@@ -929,7 +929,7 @@ km = KMeans(n_init=1, init="random")
 pipe = make_pipeline(km, LogisticRegression())
 
 param_grid = {'kmeans__n_clusters': [10, 50, 100, 200, 500]}
-grid = GridSearchCV(pipe, param_grid, cv=5, verbose=True)
+grid = GridSearchCV(pipe, param_grid, verbose=True)
 grid.fit(X, y_people)
 ```]
 
@@ -939,7 +939,7 @@ grid.fit(X, y_people)
 
 ???
 If you want to do feature extraction, if you want to use
-clustering in a supervised pipeline, this is much easier. 
+clustering in a supervised pipeline, this is much easier.
 
 So here's an example of using clustering in a supervise
 pipeline on the faces dataset.
@@ -951,12 +951,12 @@ regression and then I can just grid search number of
 clusters on KMeans because since now I have an actual
 evaluation criterion, I want to have an accurate model. I
 don't care about finding semantic clusters, I only care
-about finding an accurate model. 
+about finding an accurate model.
 
 And so if I actually was going to use KMeans as a part of
 the supervised pipeline, I can throw all these metrics and
 all the introspection out of the window and I can just
-actually measure what I'm interested in. 
+actually measure what I'm interested in.
 
 This is often what you want to do, often you want to have as
 part of a bigger pipeline and then you can just measure the
@@ -972,13 +972,13 @@ class: spacious
 # So what is n_clusters?
 
 - As preprocessing
-  
+
   – The one that makes the whole pipeline work best.
-  
+
   – Larger is often better.
 
 - For exploratory analysis:
-  
+
   – The one that tells you the most about the data.
 
 - For most datasets, there is no “correct” number of
@@ -998,7 +998,7 @@ For preprocessing, just fine tune your whole pipeline.
 Usually, the more is better, as you can see here, basically,
 adding more and more clusters, gives me more and more
 features and reasonable better results. And in the end,
-there's usually no correct number of clusters. 
+there's usually no correct number of clusters.
 
 If you want clusters that are interpretable, I think having
 stable clusters is something that makes a lot of sense. If

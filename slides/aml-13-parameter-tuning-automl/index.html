@@ -76,7 +76,7 @@ param_dist = {"max_depth": [3, None],
 n_iter_search = 20
 random_search = RandomizedSearchCV(clf,
                                    param_distributions=param_dist,
-                                   n_iter=200, cv=5)
+                                   n_iter=200)
 ```
 - lists or objects with `rvs` method
 - Use continuous distributions for biggest advantage

@@ -773,7 +773,7 @@ sim_options = {'name': 'cosine',  # 'pearson', 'pearson_baseline', 'msd'
                'user_based': False}  # compute sim between items
 algo = KNNBasic(k=40, sim_options=sim_options)
 
-cross_validate(algo, data, cv=5, verbose=True)
+cross_validate(algo, data, verbose=True)
 ```
 
 ```

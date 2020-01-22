@@ -41,22 +41,29 @@ be a lot of new stuff in this course. Who’s taking machine learning this
 semester, raise your hand? And who has taken it before? And who hasn’t?
 I'm recording all of these lectures and they'll go up on youtube.
 
+FIXME replace ml workflow with my diagram. Include problem description?
 FIXME examples of supervised learning?
 FIXME add Chris Bishop's book?
 FIXME books clickable links 
 
 ---
-
+class: compact
 # Logistics
 
 ## Email
 andreas.mueller@columbia.edu
 (NOT amueller who is someone else)
 
-### CAs: Pranjal Bajaj, Ujjwal Peshin, Liyan Nie, Yao Fu, Luv Aggarwal, Sukriti Tiwari
+## CAs
+- Subham Agrawal sa3762
+- Deka Auliya Akbar da2897
+- Satvik Jain sj2995
+- Hritik Jain hj2533
+- Kartik Parnami kp2844
+- Neelam Patodia np2723
 
 ## Office Hours
-- Andreas Müller Wednesdays 10am-11am, Interchurch 320 K
+- Andreas Müller Thursday 10am-12pm, Interchurch 320 K
 - CA office hours: TBA
 
 ???
@@ -66,8 +73,8 @@ on the course website and piazza. My office hours are Thursdays, and I’m in th
 Interchurch building.
 
 About enrollment: The class is currently full and there's a long waiting list.
-If you're a DSI student, you should be in. Otherwise you can wait for people to drop.
 If you're a PhD student and on the waiting list, please contact me.
+If you're a DSI student, you will be prioritized if someone drops the class.
 If you're not a PhD or DSI student, please don't contact me.
 You can informally sit in on the course, everything will be public.
 I might give those auditing informally access to courseworks later.
@@ -78,8 +85,8 @@ I might give those auditing informally access to courseworks later.
 
 .larger[
 - Course website
-http://www.cs.columbia.edu/~amueller/comsw4995s19/<br /><br />
-- Six programming assignments<br /><br />
+http://www.cs.columbia.edu/~amueller/comsw4995s20/<br /><br />
+- Five programming assignments<br /><br />
 - Grade: 60% homeworks, 20% first exam, 20% second exam<br /><br />
 ]
 
@@ -99,10 +106,15 @@ This year will mostly follow the same structure.
 # Slides and course materials
 
 .center[
-![:scale 40%](images/slides_and_notes.png)
+![:scale 60%](images/slides_and_notes.png)
 ]
 
 Using markdown with remark. Press "p" for notes.
+
+
+.center[
+![scale 60%](images/links-icons.png)
+]
 
 ???
 
@@ -585,12 +597,12 @@ this particular problem.
 # Relationship to Statistics
 
 .left-column[
-Statistics
+### Statistics
 - model first
 - inference emphasis
 ]
 .right-column[
-Machine learning
+### Machine learning
 - data first
 - prediction emphasis
 ]
@@ -620,12 +632,12 @@ behind your question works.
 # Relationship to Statistics
 
 .left-column[
-Statistics
+### Statistics
 - model first
-- infence emphasis
+- inference emphasis
 ]
 .right-column[
-Machine learning
+### Machine learning
 - data first
 - prediction emphasis
 ]
@@ -1146,7 +1158,7 @@ firmly on the Python side.
 
 # Python 2 vs Python 3
 
-- “current” : (2.7), 3.6, 3.7
+- “current” : (2.7), 3.6, 3.7, 3.8
 
 - Don't use Python 2
 
@@ -1251,16 +1263,8 @@ whenever possible.
 # Environments and Jupyter Kernels
 .smaller[
 - Environment != kernels
-- Use nb_conda_kernels or add environment kernels manually:
+- Use nb_conda_kernels or add environment kernels manually
 
-.smallest[
-```bash
-source activate myenv
-python -m ipykernel install --user --name myenv --display-name "Python (myenv)"
-source activate other-env
-python -m ipykernel install --user --name other-env --display-name "Python (other-env)"
-```
-]
 - https://jakevdp.github.io/blog/2017/12/05/installing-python-packages-from-jupyter/
 ]
 .left-column[

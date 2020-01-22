@@ -1,6 +1,6 @@
 # Applied Machine Learning Spring 2020
 
-Materials for the course COMS4995 will be posted here.
+Materials for the course COMS4995 Applied Machine Learning will be posted here.
 
 You can find more details on the course (and an overview of the materials) on [the course website](http://www.cs.columbia.edu/~amueller/comsw4995s20/schedule/).
 

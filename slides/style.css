@@ -43,12 +43,14 @@ font-size:30px;
 line-height: 1.1;
 margin: 0px 0;
 }
+
 .remark-slide-container .compact .MathJax_Display{
     line-height: 1.1;
     margin: 1px 0;
     }
-.remark-slide-container .compact h1{
+.remark-slide-container .compact h1, .remark-slide-container .compact h2, .remark-slide-container .compact h3, .remark-slide-container .compact ul{
 margin-bottom: 3px;
+margin-top: 5px;
 }
 .padding-top {
     padding-top: 100px;

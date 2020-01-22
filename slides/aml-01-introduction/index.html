@@ -45,6 +45,7 @@ FIXME replace ml workflow with my diagram. Include problem description?
 FIXME examples of supervised learning?
 FIXME add Chris Bishop's book?
 FIXME books clickable links 
+FIXME less facebook, add more science applications?
 
 ---
 class: compact
@@ -73,8 +74,8 @@ on the course website and piazza. My office hours are Thursdays, and I’m in th
 Interchurch building.
 
 About enrollment: The class is currently full and there's a long waiting list.
-If you're a PhD student and on the waiting list, please contact me.
 If you're a DSI student, you will be prioritized if someone drops the class.
+If you're a PhD student and on the waiting list, please contact me.
 If you're not a PhD or DSI student, please don't contact me.
 You can informally sit in on the course, everything will be public.
 I might give those auditing informally access to courseworks later.
@@ -134,9 +135,7 @@ class: middle
 All lectures will be recorded and posted publicly.
 You can check out last year's lecture to get an idea of what that looks like.
 If you're asking a question, the mic might pic you up, and you might end up audible on youtube.
-Does anyone have a problem with that? I'll have you fill out a consent form with the first homework.
-Really, it's unlikely that it's possible to hear or identify you, but I want to make sure I don't
-get sued, and I don't really have the resources to edit all the videos.
+If you have a problem with that, I have to ask you to ask questions after the lecture.
 
 ---
 # Plagiarism and Code copying
@@ -161,15 +160,14 @@ http://scikit-learn.org/dev/developers/contributing.html
 ???
 
 A couple of you have approached me asking if I have any projects relating to
-scikit-learn. Who here is interested in contributing to scikit-learn?  So
-answer is yes, there are many many projects. However, currently I don’t have a
-lot of time to mentor you on this. This will probably change during the
-semester. You are very welcome to start contributing to scikit-learn, though,
-and I’m happy to answer questions. There is a pretty extensive guide to
-contributing, the link is here. If you want to do a project with me,
-the best way is to start solving some of the easy issues on the issue
-tracker to get familiar with the project and the workflow before working
-on something bigger.
+scikit-learn. So answer is yes, there are many many projects. However,
+currently I don’t have a lot of time to mentor you on this. This will probably
+change during the semester. You are very welcome to start contributing to
+scikit-learn, though, and I’m happy to answer questions. There is a pretty
+extensive guide to contributing, the link is here. If you want to do a project
+with me, the best way is to start solving some of the easy issues on the issue
+tracker to get familiar with the project and the workflow before working on
+something bigger.
 
 ---
 
@@ -456,7 +454,6 @@ annotations, and use the model to annotate the rest of your data.
 .padding-top[
 $$ x_i \propto p(x) \text{ i.i.d.}$$
 Learn about $p$.
-
 ]
 ???
 
@@ -468,6 +465,13 @@ distribution compactly.  The goal in unsupervised learning is often much less
 clear than in supervised learning, and there is no-one providing a “correct”
 answers and no supervisor.
 
+--
+
+- Clustering
+- Dimensionality reduction
+- Topic modeling
+
+???
 Common examples of unsupervised learning is discovering topics in news articles
 or on twitter, or grouping data into clusters for easier analysis.  Another one
 is outlier detection, where you ask “does this data look normal” which is
@@ -947,405 +951,6 @@ need to.
 Arguably I'm a bit biased because I work on scikit-learn. For some applications
 that subsampling might not make sense, or working on very large data is critical.
 But I don't think that should ever be the first step.
-
----
-
-# Cornerstones of this Course
-
-- Good software engineering practices
-- Problem definition and success measures
-- Feature engineering and data cleaning
-- Strength and weaknesses of different algorithms
-- Model selection best practices
-
-???
-
-So finally some notes about my philosophy for this course. There are a couple
-of things I want to emphasize. One is good software engineering practices.
-Machine learning systems are usually more complex than traditional software,
-and so good software engineering is even more important, and that’s where we’ll
-start in the next lecture.
-One thing that we discussed today and that will also be part of the assignments
-is problem formulation and choosing the right evaluation measure. That’s
-something that’s critical in the real world, but not part of your usual course
-or ml competition.
-There are things that are often not taught in class, but you can learn at
-machine learning competitions are feature engineering, data cleaning and model
-choice.
-And it’s not only important to know which models to try, it’s also important to
-apply best practices in model selection to ensure your models will perform well
-in the real world.
-
----
-
-# The Machine Learning Work-Flow
-
-![:scale 100%](images/ml-workflow.png)
-
-Taken from MAPR https://www.mapr.com/ebooks/spark/08-recommendation-engine-spark.html
-
-???
-
-Here is one possible depiction of the overall machine learning workflow.
-In this class, I attempt to cover as many aspects of this as possible,
-only leaving out the data collection.
-I stole this illustration from a book on recommendation engines, but I mostly
-agree with it.
-Everything starts with the data generating process, in this diagram it’s the
-user. You ingest the data, and preprocess it. Some of the preprocessed that is
-held out for model validation. The rest is used for actually building the
-model. Then, there’s the model debugging loop. You get results and you want to
-improve them. That’s what’s shown as the train-test-loop. I would argue
-sometimes this loop goes further back, and maybe you discover an issue as early
-as in the ingestion. In the end, you find a model that you like, and you deploy
-it. However, that’s not the end of the story! If you’re working with a life
-system, the deployed model is likely to change user behavior, which means your
-input data changes, and your model might not be applicable any more! That
-feedback loop is really tricky, and we won’t go into that in this course. It’s
-good to keep in mind when you all create your first startup, though.
-
----
-class: center, middle
-
-# General coding guidelines
-
-???
-Next, I want to talk about Python and some software engineering
-principles. But before we do that, I want to mention two famous quotes
-that provide great general guidelines for software development.
-
----
-class: middle
-
-Programs must be written for people to read, and only incidentally for
-machines to execute.
-.quote_author[Harold Abelson (wizard book)]
-
-???
-The first one is by Harold Abelson from the foreword of “structure
-and interpretation of computer programs” a classic in programming
-languages and compilers.
-[read]
-The gist is that the main point of code is to communicate ideas to your
-peers and to your future self.
-A similar sentiment is expressed in the statement that “code is read
-more often than it is written”. Take more time writing code, so that
-you and other can spend less time reading it. Don’t focus on what’s
-“easy for the computer” or “elegant”. Focus on what’s easy to
-understand for people.
-
----
-class: middle
-
-Everyone knows that debugging is twice as hard as writing a program in
-the first place. So if you're as clever as you can be when you write it,
-how will you ever debug it?
-.quote_author[Brian Kernighan]
-
-???
-This one is from Brian Kernighan, who wrote the first book on C together
-with Dennis Richie. Kernighan is also the creator of awk and many other
-parts of unix, in particular the name. He says
-[read]
-This is another call for simplicity. Make code easy to understand. For
-yourself now to debug, for your future self to know what the hell you were
-thinking, and for others that might want to use this code in the future.
-Hopefully all the code you write will be read again. Otherwise, what’s
-the point? That might not be true for your assignments in most classes,
-but the point of the assignments it to practice for the real world. So I
-want to make sure that the code that you write in class is on the same
-standard that it needs to be out there on your job. Also, think of the
-poor course assistants.
-
----
-class: padding-top
-
-- Don’t be clever!
-
-
-- Make it readable!
-
-
-- Future you is the most likely person to try to understand your code.
-
-
-
-???
-So to summarize:
-[read]
-
-And there's one more trick to making your code readable and understandable.
-Don't write code. The more you write, the more you need to read. If you can
-avoid writing code, do it! If you can get a 10% speedup by making your code
-three times as long, usually it's not worth it.
-
---
-- Avoid writing code.
-
----
-class: center, middle
-
-# Python basics
-
-???
-So now I want to go over some Python basics. And don’t worries, we
-won’t go over syntax or the standard library.
-
----
-class: spacious
-
-# Why Python?
-
-- General purpose language
-- Great libraries
-- Easy to learn / use
-- Contenders: R (Scala? Julia?)
-
-???
-First, a short defense on why I’m teaching this class in Python.
-Python is a general purpose programming language, unlike matlab or R,
-so you can do anything with it.
-It is very powerful, mostly because there are so many libraries for
-python that you can do basically anything with just a couple of lines.
-Python is arguably easy to learn and easy to use, and it allows for a
-lot of interactivity.
-The only real contender in the data science space that I can think of
-is R, which is also a good option, but well, I’m not an R guy. Much
-of this course could be taught in R instead, though the software
-development tooling is a bit worse (but other things are better).
-You might have better chances with Python in industry jobs.
-There’s also Scala, but I’d argue that’s way too complicated and
-doesn’t have the right tools for the kind of data analysis and machine
-learning we want to do in this course.
-
----
-class: spacious
-
-# The two language problem
-
-Python is sloooow…
-
-
-- Numpy: C
-- Scipy: C, fortran
-- Pandas: Cython, Python
-- Scikit-learn: Cython, Python
-
-- CPython: C
-
-???
-So there’s one thing that I really  don’t like about Python. Any
-idea what that is?
-Python is slooow. Like really slow.
-So you know all these great libraries for Python for data science, like
-numpy, scipy, pandas and scikit-learn. Do you know what language they
-are written in?
-Numpy is written in C,
-Scipy is written in C and Fortran, pandas and scikit-learn are written
-in Cython and Python. And Cpython, the interpreter we use, is written
-in … C obivously
-That creates a bit of a divide between the users, who write python,
-and the developers, who write C and Cython. I have to admit, I don’t
-write a lot of Cython myself, mostly Python… but that’s not great.
-So you need to be aware that if you actually want to implement new
-algorithms, and you can’t express them with pandas and numpy, you
-might need to learn cython.
-For this course, this won’t really be a problem, though. We’ll stay
-firmly on the Python side.
-
-
----
-
-# Python 2 vs Python 3
-
-- “current” : (2.7), 3.6, 3.7, 3.8
-
-- Don't use Python 2
-
-???
-There’s another thing that you could call the two language problem,
-it’s python 2 vs python 3.
-The last version of python 2 is python 2.7, and really no-one should be
-using anything earlier. The commonly used versions of python 3 are 3.6 and 3.7.
-There is really no reason to use python 2 any more and scikit-learn already doesn't
-support it in it's current development version, same for numpy and matplotlib. Unless you already
-wrote lots of code earlier. If you’re at a company it might not be
-easy to make the  transition, and that’s why python 2 is still around.
-
-So the important part are the changes. Anyone know what changed?
-
----
-class: spacious
-
-# Python ...
-
-Package management:
-
-- don't use system python!
-
-- use Virtual environments
-
-- understand pip (and wheels)
-
-- probably use Conda (and anaconda or conda-forge)
-
-???
-Package management is really important if you want to become a serious python user.
-Unfortunately, it’s a bit tricky, partly due to the two language problem, which
-means packages have dependencies that are not in python.
-First of, you should be aware of the environment you are using. Usually
-it’s a good idea to work with virtual environments, in which you can
-control what software is installed in what version. If you’re on OS X
-or linux, your system will com with some python, but you don’t really
-want to mess with that. Create your own environments, and are aware of
-which environment you are using at any moment.
-The standard python way to install packages is pip, which is part of
-the setuptools package. Pip allows you to install all python packages in the pipy
-repository, which is basically all of them.
-
---
-???
-Until not so long ago, pip needed to compile all C code locally on your
-machine, which was pretty slow and complicated. Now, there are binary distributions,
-called wheels, which mean no compilation for most packages! If you’re compiling
-something when you’re installing, you’re probably doing it wrong.
-The issue with pip is that it only works for python packages, and some
-of our packages rely on linear algebra packages like blas and lapack,
-and you need to install them some other way.
-A really easy work-around for that is using a different package manager,
-called conda. It was created by a company called Anaconda (used to be continuum
-IO) and they ship a bundle called anaconda, which installs basically all the
-important packages. I recommend you use that for the course.
-Conda can be used with different source repositories. By default, it uses
-the anaconda one that is managed by the company. There’s also an open
-repository that is managed by the community that’s called conda-forge.
-In practice I use both conda and pip.
----
-class: some-space
-
-# Pip and conda and upgrades
-
-- Pip upgrade works on dependencies (unless you do -no-dep)
-
-- pip has no dependency resolution!
-
-- conda has dependency resolution
-
-- Use conda environments!
-
-- upgrading a conda package with pip (or vice versa) will break stuff!
-
-???
-Oh and one word of warning: if you do pip upgrade somepackage, it will
-also update all the dependencies. That is often not what you want, in
-particular if you are using it in a conda environment or if you installed
-a particular version of numpy or scipy that you don’t want upgraded.
-An imporatant thing to keep in mind about pip is that it has no dependency
-resolution, which means it will install the dependencies for any
-package you install, but it won't care about all the packages you installed
-before. So whenever you're using pip to install something, it could potentially
-break an already installed package.
-Conda on the other hand has a dependency resolution mechanism, which means
-it'll ensure that all the packages that you installed are compatible with each other.
-Sometimes there are conflicts between packages, though, which might prevent
-you from installing certain combinations.
-The solution here is to make liberal use of conda environments.
-If you need to work on a specific project, you should have a conda environment
-for that project ant it's requirements. Conda environments are really very useful
-and easy to use.
-
-Finally, don't try to upgrade a package with pip if it was installed
-with pip or the other way around. So if you mix conda and pip, make sure
-you check which one you used before upgrading. I recommend to use conda
-whenever possible.
-
----
-# Environments and Jupyter Kernels
-.smaller[
-- Environment != kernels
-- Use nb_conda_kernels or add environment kernels manually
-
-- https://jakevdp.github.io/blog/2017/12/05/installing-python-packages-from-jupyter/
-]
-.left-column[
-![:scale 100%](images/kernel_other_env.png)
-]
-.right-column[
-![:scale 100%](images/kernel_other_env2.png)
-]
-???
-
-If you're using conda environments, you will want to use them in your jupyter notebooks.
-However, jupyter is not immediately aware of your environments. Jupyter runtime environments
-are defined by kernels, which can be python environments, or different programming languages.
-You need to make sure that jupyter is aware of your environments to use them as a kernel.
-One way is to manually add them by using this command here which invokes `ipykernel install`.
-That works with any kind of python environment.
-For conda environments specifically, you can also install the `nb_conda_kernels` package,
-which will automatically create kernels for all environments that contain the `ipykernel`
-package. If you do either of them, you'll get a choice of which kernel you want to use for
-a notebook. That's a great way to use different versions of python, like 2 and 3, or different
-versions of scikit-learn or matplotlib or anything else.
-
-There is a bit more tooling around python that I want to talk about next.
-
----
-class: spacious
-
-# Dynamically typed, interpreted
-
-- Invalid syntax lying around
-
-- Code is less self-documenting
-
-???
-One of the reasons Python is so easy to learn and use is because it’s
-a dynamically typed languages.
-So who of you have worked with statically typed languages like C, C++,
-Java or Scala?
-It’s often a bit cumbersome that you have to declare the type of
-everything, but it provides some safety nets. For example you know that
-if the code compiles, the syntax is correct everywhere. You don’t know
-whether the code does what you want, but you know it’ll do something.
-Mabye crash your machine, but whatever.
-Also, arguably, dynamically typed code is less self-documenting. If I write a
-function without documentation, it’s very hard for you to guess what I
-expect the input types to be. There’s now type annotations for Python,
-which is great, but they are not supported in Python2 and are not adopted
-everywhere yet. So how can we get back our safety nets?
-
----
-class: spacious
-
-# Editors
-
-- Flake8 / pyflake
-
-- Scripted / weak typing: Have a syntax checker!
-
-- write pep8 (according to the standard, not the tool)
-
-- use autopep8 if you have code lying around
-
-???
-One of the simplest fixes is to have a syntax checker in your
-editor. Whatever editor you’re using, make sure you have something like
-flake8 or pyflake installed that will tell you if you have obvious errors.
-These will also tell you if you have unused imports, undeclared variables
-or unused variables. All that helps you to immediately fix problems,
-and not wait until you run your program.
-I also recommend having a style checker. Flake8 also enforces pep8,
-which is the python style guide.
-You should write pep8 compatible code. It will make it easier for others
-to read your code, and once you’re used to it, it’ll make it easier
-for you to read other’s code.
-If you want to convert code to be pep8 compatible, check out the autopep8
-package. The pep8 tool is very strict these days, and I don't heed
-all the warnings. There is a configuration file you can use to silence
-the more obnoxious ones. When I say you should write pep9, I mean
-you should write according to the standard, not the tool.
-The first guideline of pep8 is to use your own judgment and not
-blindly follow the guide.
 
 ---
 class: middle

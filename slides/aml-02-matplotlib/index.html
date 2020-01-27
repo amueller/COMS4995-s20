@@ -33,6 +33,7 @@ with machine learning.
 Again, slides and slide notes for this are online.
 
 FIXME Actually perfect length!
+FIXME weird structure, going back between matplotlib and principles. reorder!
 FIXME better graph for different channels / destinguish categorical and continuous channels?
 FIXME clean up colormap evaluation plot?
 FIXME talk about legends?
@@ -43,16 +44,12 @@ FIXME more from Claus Wilke's book
 FIXME 3d animations /interactivity
 FIXME constraint layouts?
 ---
-.center[
-[![:scale 45%](images/wilke.png)](https://serialmentor.com/dataviz/)
-]
----
 class: center, middle
 
 # Principles of Data Visualization
 
 ???
-For the rest of today I want to talk about visualization and matplotlib.
+Today I want to talk about visualization and matplotlib.
 We will not talk about numpy and pandas, even though they are very important
 for doing data science with python. There are two reasons:
 I find it easier to talk about visualization in the abstract, while
@@ -69,6 +66,14 @@ the Exploratory data analysis and visualization course, which will go into
 way more detail than we will here - and we'll focus a bit more on the
 python interfaces.
 ---
+.center[
+[![:scale 45%](images/wilke.png)](https://serialmentor.com/dataviz/)
+]
+???
+There's this great free book by Claus Wilke on Data Visualization.
+It's a great introduction and a pretty short read and you should read it.
+It's not a python book, it's just theory but it's great.
+---
 class: center, padding-top, spacious
 
 # Why?
@@ -83,7 +88,7 @@ matter of this class, I think the exploration is more important.
 In general, you should think about what the point of any visualization is,
 and whether the method you chose is the best for this purpose.
 
-In many of my capstone reports last semester I had people show all kinds of
+In many of my capstone reports last I have seen people show all kinds of
 charts and graphs and often the description was "here is a bar-plot of 
 quantity X". So what? Why are you showing me this? What's the conclusion?
 Ideally a visualization should answer a question. In exploratory analysis,

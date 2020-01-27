@@ -19,7 +19,7 @@ class: center, middle
 
 # Visualization and Matplotlib
 
-01/30/19
+02/27/20
 
 Andreas C. Müller
 
@@ -33,6 +33,8 @@ with machine learning.
 Again, slides and slide notes for this are online.
 
 FIXME Actually perfect length!
+FIXME better graph for different channels / destinguish categorical and continuous channels?
+FIXME clean up colormap evaluation plot?
 FIXME talk about legends?
 FIXME gridspec instead of matlab style subplots?
 FIXME do some seaborn
@@ -40,6 +42,10 @@ FIXME more from Jake's book
 FIXME more from Claus Wilke's book
 FIXME 3d animations /interactivity
 FIXME constraint layouts?
+---
+.center[
+[![:scale 45%](images/wilke.png)](https://serialmentor.com/dataviz/)
+]
 ---
 class: center, middle
 
@@ -96,7 +102,7 @@ thesis which has a great introduction, and from which I stole some illustrations
 # Communicate
 
 ---
-class: padding-top, spacious
+class: spacious
 
 Above else, show the data.<br />
 Maximize the data-ink ratio.
@@ -170,14 +176,10 @@ often - though containment and connection can be helpful.
 ---
 class: center, middle
 
-# Picking Channels
-.left-column[
-![:scale 50%](images/visual_channels2.png)
+# Picking Channels for quantitative data
+.center[
+![:scale 25%](images/visual_channels2.png)
 ]
-.right-column[
-![:scale 100%](images/visual_channels3.png)
-]
-
 ???
 There have been studies of which of these are good ways to relate
 quantities. The winner is position, closely followed by length. These
@@ -437,31 +439,36 @@ import numpy as np
 ```
 YES!
 ---
-
 # matplotlib & Jupyter
 .left-column[
 `%matplotlib inline`
+.smaller[
 - sends png to browser
 - no panning or zooming
 - new figure for each cell
 - no changes to previous figures
 ]
+]
 --
 .right-column[
 `%matplotlib notebook`
+.smaller[
 - interactivity in old notebook
 - doesn't work in jupyter lab
 - need to create separate figures
 - ability to update figures
 ]
+]
 --
 .clear-column[
 `%matplotlib widget`
+.smaller[
 - interactive widget
 - all figure features
 - need to create separate figures explicitly
 - ability to update figures
 - installation instructions: https://github.com/matplotlib/jupyter-matplotlib 
+]
 ]
 
 ???
@@ -715,7 +722,7 @@ something: the gallery and the plotting commands summary.
 I will go through only some of the commands from the summary that I
 think are particular important and their most important aspects.
 ---
-
+class: compact
 # plot
 .smallest[
 ```python
@@ -762,17 +769,16 @@ class: compact
 
 .tiny[
 ```python
-fig, ax = plt.subplots(2, 2, figsize=(5, 5),
+fig, ax = plt.subplots(1, 4, figsize=(10, 3),
                        subplot_kw={'xticks': (), 'yticks': ()})
-ax[0, 0].scatter(x, y)
-ax[0, 0].set_title("scatter")
-ax[0, 1].plot(x, y, 'o')
-ax[0, 1].set_title("plot")
-ax[1, 0].scatter(x, y, c=x-y, cmap='bwr', edgecolor='k')
-ax[1, 1].scatter(x, y, c=x-y, s=np.abs(np.random.normal(scale=20, size=50)), cmap='bwr', edgecolor='k')
+ax[0].plot(x, y, 'o')
+ax[1].scatter(x, y)
+ax[2].scatter(x, y, c=x-y, cmap='bwr', edgecolor='k')
+ax[3].scatter(x, y, c=x-y, s=sizes, cmap='bwr', edgecolor='k')
+
 ```
 .center[
-![:scale 40%](images/matplotlib_scatter.png)
+![:scale 100%](images/matplotlib_scatter.png)
 ]
 ]
 
@@ -952,6 +958,9 @@ ax.legend()
 .center[
 ![:scale 100%](images/matplotlib_twinx1.png)]
 ]
+
+--
+
 .right-column[
 .tiny[
 ```python
@@ -1019,7 +1028,7 @@ be made to look narrow or wide by adding another gaussian blob at a differnt pro
 ---
 # 3D plotting
 .left-column[
-.smaller[
+.smallest[
 ```python
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -1044,7 +1053,7 @@ Then you need to set the projection for the axes you're plotting into to "3d", a
 ---
 # 3D Scatters
 .left-column[
-.smaller[
+.smallest[
 ```python
 from mpl_toolkits.mplot3d import Axes3D 
 import matplotlib.pyplot as plt
@@ -1055,8 +1064,7 @@ X, y = iris.data, iris.target
 fig = plt.figure()
 ax = fig.add_subplot(
     111, projection='3d')
-ax.scatter(X[:, 1], X[:, 2], X[:, 3],
-           c=y)
+ax.scatter(X[:, 1], X[:, 2], X[:, 3], c=y)
 ```
 ]
 ]
@@ -1100,8 +1108,8 @@ This is taken from the matplotlib user guide, btw. Just because you can doesn't 
 .padding-top[
 
 ![:scale 23%](images/tufte.jpg)&nbsp;
-![:scale 23%](images/cleveland.jpeg)&nbsp;
-![:scale 23%](images/wilke.png)&nbsp;
+![:scale 23%](images/cleveland.jpeg)&nbsp
+[![:scale 23%](images/wilke.png)](https://serialmentor.com/dataviz/)&nbsp;
 ![:scale 23%](images/pdsh.png)
 ]
 Also: https://matplotlib.org/tutorials/

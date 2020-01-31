@@ -32,13 +32,10 @@ FIXME:
 More details on implementing cross-validation?
 Grouped cross-validation?
 FIXME cross_validation function?
+FIXME ensemble approach to cross-validation?
 FIXME kick out nearest centroids?
 FIXME in nearest centroid shrinkage plot, label axes, put in diagonal as identity, put in points as examples
-FIXME overfitting the validation set?
-FIXME we have the threefold split before it's introduced?
-FIXME make plot to illustrate overfitting test set? allude to kaggle?
-FIXME should we do empirical risk minimization in this lecture at underfitting vs overfitting?
-risk minimization: two kinds of error (estimation and generalization)
+FIXME risk minimization: two kinds of error (estimation and generalization)
 ---
 
 class: center
@@ -561,87 +558,26 @@ the results depend on the particular sampling.
 .smallest[Interesting related read on overfitting in cross-validation
 [Preventing Overfitting in cross-validation - Ng 1997](20http://robotics.stanford.edu/~ang/papers/cv-final.pdf)]
 ---
+class: center
 # Overfitting the validation set
-.smaller[
-```python
-from sklearn.datasets import load_breast_cancer
-from sklearn.preprocessing import scale
 
-data = load_breast_cancer()
-X, y = data.data, data.target
-X = scale(X)
+![:scale 80%](images/overfitting_validation_set_1.png)
 
-X_trainval, X_test, y_trainval, y_test = train_test_split(X, y)
-X_train, X_val, y_train, y_val = train_test_split(
-    X_trainval, y_trainval)
-
-knn = KNeighborsClassifier(n_neighbors=5).fit(X_train, y_train)
-
-print("Validation: {:.3f}".format(knn.score(X_val, y_val)))
-print("Test: {:.3f}".format(knn.score(X_test, y_test)))
-```
-```
-Validation: 0.972
-Test: 0.965
-```
-]
-???
-So I’ll try to illustrate this concept of overfitting the test
-set. Basically, the idea is that if you try out too many things on the
-test set, you will learn about noise in the test set, and this knowledge
-will not generalize to new data.
-
-So here I give you an example with the breast cancer dataset that’s
-build into scikit-learn.
-I split the data twice, now I have a training, a validation and a
-test set.
-I build a nearest neighbors model on the training set, and apply it to
-the test set and the validation set.
-The results are not the same, but they are pretty close. That they are
-different is a consequence of the small dataset and the noisy data.
 ---
+class: center
 # Overfitting the validation set
 
-```python
-val = []
-test = []
+![:scale 80%](images/overfitting_validation_set_2.png)
+---
+class: center
+# Overfitting the validation set
 
-for i in range(1000):
-    rng = np.random.RandomState(i)
-    noise = rng.normal(scale=.1, size=X_train.shape)
-    knn = KNeighborsClassifier(n_neighbors=5)
-    knn.fit(X_train + noise, y_train)
-    val.append(knn.score(X_val, y_val))
-    test.append(knn.score(X_test, y_test))
+![:scale 80%](images/overfitting_validation_set_3.png)
+---
+class: center
+# Overfitting the validation set
 
-print("Validation: {:.3f}".format(np.max(val)))
-print("Test: {:.3f}".format(test[np.argmax(val)]))
-```
-
-```
-Validation: 1.000
-Test: 0.958
-```
-
-???
-So now let me propose a silly way to tune my classifier.
-I add random noise to my training set for fitting.
-And I repeat that 1000 times, and I check which of these thousand runs
-has the best performance on the validation set. That particular run has
-100% percent accuracy, quite a bit better than before.
-If I would use the same set to estimate how well my model is, I would think
-I created a perfect model and I should write a paper about building much
-better models by using noise.
-
-But if I test the same model on the test set, I get a lower accuracy then
-before: the noise I added was good for the validation set, but not the
-test set.
-The lesson is: If I try something often enough, be it parameters or noise, at some point I'll
-get better performance on the validation set, but that doesn’t mean it will be good for any new data.
-By selecting the best among many you introduce a bias, and the validation
-accuracy is not a good measure of generalization performance any more.
-
-
+![:scale 80%](images/overfitting_validation_set_4.png)
 ---
 # Threefold Split for Hyper-Parameters
 
@@ -706,12 +642,11 @@ Better data use (larger training sets).
 Does that solve all problems? No, it replaces only one of the splits,
 usually the inner one!
 --
-<br \>
-
+.smaller[
 pro: more stable, more data
 
 con: slower
-
+]
 ???
 
 ---
@@ -899,6 +834,7 @@ the different parameters.
 Here are the mean training score and mean test score together with one
 standard deviation.
 ---
+class: spacious
 # Nested Cross-Validation
 
 - Replace outer split by CV loop
@@ -926,6 +862,9 @@ So I mentioned k-fold cross validation, where k is usually 5 or ten,
 but there are many other strategies.
 
 One of the most commonly ones is stratified k-fold cross-validation.
+---
+# KFold
+
 ---
 # StratifiedKFold
 
@@ -985,6 +924,32 @@ reasonably large test-sets.
 It’s also great if you have a very large training set and you want to
 subsample it to get quicker results.
 ---
+class: spacious
+# Defaults in scikit-learn
+
+- 5-fold in 0.22 (used to be 3 fold)
+- For classification cross-validation is stratified
+- train_test_split has stratify option:
+train_test_split(X, y, stratify=y)
+
+- No shuffle by default!
+
+???
+By default, all cross-validation strategies are five fold.
+If you do cross-validation for classification, it will be stratified
+by default.
+Because of how the interface is done, that’s not true for
+train_test_split and if you want a stratified train_test_split, which
+is always a good idea, you should use stratify=y
+Another thing that’s important to keep in mind is that by default
+scikit-learn doesn’t shuffle! So if you run cross-validation twice
+with the default parameters, it will yield exactly the same results.
+---
+class: center, middle
+# Cross-Validation with non-iid data
+
+???
+---
 # GroupKFold
 
 .padding-top[
@@ -1025,27 +990,6 @@ chunks of data from the past and making predictions on the next
 chunk. This is quite different from the other was to do cross-validation,
 in that the training sets are all overlapping, but it’s more appropriate
 for time-series.
----
-class: spacious
-# Defaults in scikit-learn
-
-- 5-fold in 0.22 (used to be 3 fold)
-- For classification cross-validation is stratified
-- train_test_split has stratify option:
-train_test_split(X, y, stratify=y)
-
-- No shuffle by default!
-
-???
-By default, all cross-validation strategies are five fold.
-If you do cross-validation for classification, it will be stratified
-by default.
-Because of how the interface is done, that’s not true for
-train_test_split and if you want a stratified train_test_split, which
-is always a good idea, you should use stratify=y
-Another thing that’s important to keep in mind is that by default
-scikit-learn doesn’t shuffle! So if you run cross-validation twice
-with the default parameters, it will yield exactly the same results.
 ---
 # Using Cross-Validation Generators
 

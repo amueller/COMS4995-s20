@@ -35,8 +35,6 @@ FIXME window for time
 FIXME motivate for time / non-iid
 FIXME writing your own
 FIXME ensemble approach to cross-validation?
-FIXME kick out nearest centroids?
-FIXME in nearest centroid shrinkage plot, label axes, put in diagonal as identity, put in points as examples
 FIXME risk minimization: two kinds of error (estimation and generalization)
 ---
 
@@ -65,8 +63,8 @@ We try to find a function that approximates the output $y_i$ for each known
 input $x_i$. But we also demand that for new inputs $x$ , and unobserved $y$,
 $f(x)$ is approximately $y$.
 
-I want to go through two simple examples of supervised algorithms today,
-nearest neighbors and nearest centroids.
+I want to go through a simple examples of supervised algorithms today,
+nearest neighbors 
 ---
 class: center
 
@@ -302,105 +300,7 @@ So going back to nearest neighbors, what parameters correspond to high
 model complexity and what to low model complexity? high n_neighbors =
 low complexity!
 ---
-class: center
-# Nearest Centroid
 
-![:scale 35%](images/nearest_centroid_boundary.png)
-
-$$f(x) = \text{argmin}_{i \in Y} ||\bar{x}_i - x||$$
-
-???
-Before we go to more techniques to find the right hyper parameters,
-I want to introduce another simple model, nearest centroid.
-The nearest centroid model simply computes the centroid, or the mean of
-each class, and classifies each point by which centroid is the closest.
-You can write that down as a formula such as here, where x_i bar is the
-centroid, and I runs over the classes.
-You can see that this yields a linear decision boundary between the
-two classes.
----
-# Nearest Centroid with scikit-learn
-
-```python
-from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(X, y)
-
-from sklearn.neighbors import NearestCentroid
-nc = NearestCentroid()
-nc.fit(X_train, y_train)
-print("accuracy: {:.2f}".format(nc.score(X_test, y_test)))
-```
-
-```
-accuracy: 0.62
-```
-
-???
-Again, we can easily build this model with scikit-learn and evaluate it
-using a test set.
-We use the train_test_split function to split the data into 75% training
-and 25% test data,
-import the nearest centroid model, fit it on the training set, and
-compute the accuracy on the test set.
-In this case, the fit method computes the mean or centroid of each class
-and stores it in the nc object, while for prediction
-
-Questions so far?
----
-class: center
-# Nearest Shrunken Centroid
-
-![:scale 70%](images/nearest_shrunken_centroid_boundary.png)
-
-![:scale 30%](images/nearest_shrunken_centroid_thresholding.png)
-
-???
-There’s a variant of the nearest centroid called the nearest shrunken
-centroid, which allows you to limit model complexity.
-In nearest shrunken centroid, you pick a positive shrinking threshold, and
-then you apply the soft-threshold function here to each of the centroids.
-The soft-thresholding function shrinks each component of a vector towards
-zero by the threshold, and if that would cross zero, to set this component
-to zero.
-Actually the mean of the data is subtracted beforehand so that this
-makes sense ;)
-
-What that means is that if the centroids have an entry that is close to
-zero, this direction gets ignored.
-Here you can see different settings of the shrinking threshold. No
-shrinking, a threshold of .4 and a threshold of .8.
-Because the centers are less than .5 apart from the data mean, the last
-panel has a perfectly horizontal line.
-
-When do you think NC works better than KNN? High dimensions!
----
-# Computational Properties Centroids
-???
-I want to compare some computational properties of the nearest shrunken
-centroid and k nearest neighbors.
-What do you think are the important computational properties of machine
-learning models?
-There are basically three: time to build the model, memory to store the
-model, and time to make a prediction.
-What are those?
-Fit time is simple, it’s computing the centroids which is n *
-p. Basically we need to look at each feature exactly once.
-Memory is storing the centroids, which is number of classes times number
-of features, and predict time
-is computing the distance to each of them, which is the same. When is
-this slow? Basically never - in high dim with only few important, maybe
-trees could be better, but we could also shrink those dimensions away.
-
---
-
-- fit: O(n * p)
-- memory: O(n_classes * p)
-- predict: O(n_classes * p)
-
-n = n_samples
-p = n_features
-
----
 # Computational Properties Neighbors
 .left-column[
 ## Naive
@@ -432,12 +332,8 @@ low dimensions.
 
 What’s bad about this?
 memory scales with data, prediction speed scales with data :-/
-
-Can have high complexity models though.
-When would you use one vs the other? Large datasets , high dimensions:
-use nearest centroid maybe.
 ---
-# Computational Properties Neighbors
+# Computational Properties
 .left-column[
 ## Naive
 - fit: no time
@@ -468,34 +364,6 @@ low dimensions.
 
 What’s bad about this?
 memory scales with data, prediction speed scales with data :-/
-
-Can have high complexity models though.
-When would you use one vs the other? Large datasets , high dimensions:
-use nearest centroid maybe.
----
-# Parametric and non-parametric models
-
-- Parametric model:
-Number of “parameters” (degrees of freedom) independent of data.
-
-- Non-parametric model:
-Degrees of freedom increase with more data.
-
-???
-These two models are examples of two general families of machine learning
-models, parametric models and non-parametric models.
-Anyone know what they are?
-Parametric models have a fixed set of parameters that are learned from
-the data, such as the centroids.
-There are always n_classes * n_features many numbers, no matter how much
-data you have.
-Non-parametric models scale their complexity with data, such as nearest
-neighbors. More data here means more complex decision boundaries, and
-more numbers to store.
-Examples?
-Trees and forests and kernel SVMs are non-parametric, linear models parametric,
-neural nets parametric (arguably, since they have sooo many parameters).
-
 ---
 
 class: center, spacious
@@ -509,20 +377,6 @@ any dataset, while in some cases, a parametric model might not be able
 to fit some data.
 Again, neural networks are somewhat their own thing, as usually people
 choose networks that could learn any possible data.
----
-class: center, middle
-
-![:scale 80%](images/knn_vs_nearest_centroid.png)
-???
-Here is a very simple example where a nearest neighbor algorithm might
-work, while nearest centroid fails because it is limited to linear
-decision boundaries.
-We’ll talk more about linear decision boundaries and their strength
-and weaknesses on Wednesday.
-
-Now, I want to talk more about how to adjust the parameters in these
-models - or really, in any model.
-
 ---
 # So far: Train-test-split
 

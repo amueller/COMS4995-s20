@@ -66,7 +66,7 @@ margin-top: 5px;
 font-size: 20px;
 }
 .remark-slide-content .tiny p, .remark-slide-content .tiny li, .remark-slide-content .tiny .remark-code,
-.tiny .remark-code-line, .remark-slide-content .tiny .dataframe{
+.tiny .remark-code-line, .remark-slide-content .tiny .dataframe, .remark-slide-content span.tiny{
 font-size: 16px;
 }
 .normal {

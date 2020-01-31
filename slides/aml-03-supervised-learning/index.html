@@ -31,7 +31,9 @@ model evaluation and model selection.
 FIXME:
 More details on implementing cross-validation?
 Grouped cross-validation?
-FIXME cross_validation function?
+FIXME window for time
+FIXME motivate for time / non-iid
+FIXME writing your own
 FIXME ensemble approach to cross-validation?
 FIXME kick out nearest centroids?
 FIXME in nearest centroid shrinkage plot, label axes, put in diagonal as identity, put in points as examples
@@ -863,13 +865,14 @@ but there are many other strategies.
 
 One of the most commonly ones is stratified k-fold cross-validation.
 ---
-# KFold
-
+.center[
+![:scale 90%](images/kfold_cv.png)
+]
 ---
-# StratifiedKFold
-
-![:scale 100%](images/stratified_cv.png)
-
+class: compact
+.center[
+![:scale 90%](images/stratified_cv.png)
+]
 Stratified:
 Ensure relative class frequencies in each fold reflect relative class
 frequencies on the whole dataset.
@@ -890,15 +893,49 @@ This is also helpful if your data is very imbalanced. If some of the
 classes are very rare, it could otherwise happen that a class is not
 present at all in a particular fold.
 ---
+# Importance of Stratification
+.smaller[
+```python
+y.value_counts()
+```
+```
+0    60
+1    40
+```
+```python
+from sklearn.model_selection import cross_val_score, KFold, StratifiedKFold
+from sklearn.dummy import DummyClassifier
+
+dc = DummyClassifier('most_frequent')
+skf = StratifiedKFold(n_splits=5, shuffle=True)
+res = cross_val_score(dc, X, y, cv=skf)
+np.mean(res), res.std()
+```
+```
+(0.6, 0.0)
+```
+```python
+kf = KFold(n_splits=5, shuffle=True)
+res = cross_val_score(dc, X, y, cv=kf)
+np.mean(res), res.std()
+```
+```
+(0.6, 0.063)
+```
+]
+---
 class: spacious
 # Repeated KFold and LeaveOneOut
 
 - LeaveOneOut : KFold(n_folds=n_samples) <br \>
-High variance, takes a long time
+High variance, takes a long time <br \>
+.tiny[(see [Raschka](https://arxiv.org/pdf/1811.12808.pdf) for a review and [Varoquaux](https://hal.inria.fr/hal-01545002/file/paper.pdf) for empirical evaluation)]
 
-- Better: RepeatedKFold. <br \>
-Apply KFold or StratifiedKFold multiple times with shuffled data. Reduces
-variance!
+- Better: ShuffleSplit (aka Monte Carlo) <br \>
+Repeatedly sample a test set with replacement
+
+- Even Better: RepeatedKFold. <br \>
+Apply KFold or StratifiedKFold multiple times with shuffled data.
 
 ???
 If you want even better estimates of the generalization performance,
@@ -910,10 +947,11 @@ high variance.
 A better way to get a robust estimate is to run 5-fold or 10-fold
 cross-validation multiple times, while shuffling the dataset.
 ---
-# ShuffleSplit / StratifiedShuffleSplit
-.padding-top[
-![:scale 100%](images/shuffle_split_cv.png)]
-
+class: compact
+.center[
+![:scale 100%](images/shuffle_split_cv.png)
+]
+.smaller[Number of iterations and test set size independent]
 ???
 Another interesting variant is shuffle split and stratified shuffle
 split. In shuffle split, we repeatedly sample disjoint training and test
@@ -923,6 +961,16 @@ and the test set size. This also allows you to run many iterations with
 reasonably large test-sets.
 It’s also great if you have a very large training set and you want to
 subsample it to get quicker results.
+---
+class: compact
+.center[
+![:scale 100%](images/repeated_stratified_kfold.png)
+]
+.smaller[
+Potentially less variance than StratifiedShuffleSplit.<br />
+Five times five fold or at most ten times ten fold is sufficient.
+]
+???
 ---
 class: spacious
 # Defaults in scikit-learn
@@ -950,10 +998,8 @@ class: center, middle
 
 ???
 ---
-# GroupKFold
 
-.padding-top[
-![:scale 100%](images/group_kfold.png)]
+![:scale 100%](images/group_kfold.png)
 
 ???
 A somewhat more complicated approach is group k-fold.
@@ -974,9 +1020,7 @@ There are several other cross-validation methods in scikit-learn that
 use these groups.
 
 ---
-# TimeSeriesSplit
-.padding-top[
-![:scale 100%](images/time_series_cv.png)]
+![:scale 100%](images/time_series_cv.png)
 
 ???
 Another common case of data that’s not independent is time

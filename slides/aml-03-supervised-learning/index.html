@@ -19,7 +19,7 @@ class: center, middle
 
 # Introduction to Supervised Learning
 
-02/04/19
+02/03/20
 
 Andreas C. Müller
 
@@ -40,29 +40,6 @@ FIXME make plot to illustrate overfitting test set? allude to kaggle?
 FIXME should we do empirical risk minimization in this lecture at underfitting vs overfitting?
 risk minimization: two kinds of error (estimation and generalization)
 ---
-class: spacious
-
-# A Note on homeworks
-
-- Submit Zip file
-- Don't include .git
-- `git archive master -o homework1.zip`
-
-???
-
-There was a bit of a misunderstanding. Don't create a PDF with your submission.
-You only need to have a pdf for task0. Submit the whole repo as a zip file to gradescope!
-Starting with homework2 you will submit pdfs, but for this you will submit code.
-
-Also, make sure you don't actually include the zip folder
-
-Ok, so from now on I'll assume you mastered git and version control and github and testing,
-and we'll focus on machine learning.
-
-Let's dive back into supervised learning.
-
-
----
 
 class: center
 
@@ -72,8 +49,10 @@ class: center
 $$ (x_i, y_i) \propto p(x, y) \text{ i.i.d.}$$
 $$ x_i \in \mathbb{R}^p$$
 $$ y_i \in \mathbb{R}$$
-$$f(x_i) \approx y_i$$
-$$f(x) \approx y$$
+$$\text{learn }f(x_i) \approx y_i$$
+such that
+$$f(x) \approx y \quad$$
+for new $(x, y) \propto p(x, y)$.
 ]
 ???
 As a reminder, in supervised learning, the dataset we learn form is
@@ -159,7 +138,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y)
 from sklearn.neighbors import KNeighborsClassifier
 knn = KNeighborsClassifier(n_neighbors=1)
 knn.fit(X_train, y_train)
-print("accuracy: {:.2f}".format(knn.score(X_test, y_test)))
+print("accuracy: ", knn.score(X_test, y_test)))
 y_pred = knn.predict(X_test)
 ```
 accuracy: 0.77
@@ -546,11 +525,12 @@ Now, I want to talk more about how to adjust the parameters in these
 models - or really, in any model.
 
 ---
-class: center, middle
+# So far: Train-test-split
 
-![:scale 80%](images/train_test_set_2d_classification.png)
+![:scale 100%](images/train_test_split_new.png)
 
 ???
+
 So far we’ve work with a split of the data into a training and a test
 set, build the model on the training set, and evaluated on the test set.
 So now, lets say we want to adjust the parameter n_neigbhbors in k
@@ -558,6 +538,28 @@ neighbors algorithm, how could we do this?
 [split, try out different values of k, choose the best on test set]
 What’s the problem with that?
 - good for choosing k, overly optimistic for getting accuracy!
+
+---
+
+# Threefold split
+![:scale 100%](images/train_test_validation_split.png)
+???
+The simplest way to combat this overfitting to the test set is by using
+a three-fold split of the data, into a training, a validation and a
+test set as we just did.
+We use the training set for model building, the validation set for
+parameter selection and the test set for a final evaluation of the model.
+So how many models should you try out on the test set? Only one! Ideally
+use use the test-set exactly once, otherwise you make a multiple
+hypothesis testing error!
+
+What are downsides of this? We lose a lot of data for evaluation, and
+the results depend on the particular sampling.
+--
+<br \>
+<br \>
+.smallest[Interesting related read on overfitting in cross-validation
+[Preventing Overfitting in cross-validation - Ng 1997](20http://robotics.stanford.edu/~ang/papers/cv-final.pdf)]
 ---
 # Overfitting the validation set
 .smaller[
@@ -639,31 +641,6 @@ get better performance on the validation set, but that doesn’t mean it will be
 By selecting the best among many you introduce a bias, and the validation
 accuracy is not a good measure of generalization performance any more.
 
----
-
-# Threefold split
-.padding-top[
-![:scale 100%](images/threefold_split.png)
-]
-???
-The simplest way to combat this overfitting to the test set is by using
-a three-fold split of the data, into a training, a validation and a
-test set as we just did.
-We use the training set for model building, the validation set for
-parameter selection and the test set for a final evaluation of the model.
-So how many models should you try out on the test set? Only one! Ideally
-use use the test-set exactly once, otherwise you make a multiple
-hypothesis testing error!
-
-What are downsides of this? We lose a lot of data for evaluation, and
-the results depend on the particular sampling.
---
-<br />
-
-pro: fast, simple
-
-con: high variance, bad use of data
-
 
 ---
 # Threefold Split for Hyper-Parameters
@@ -710,8 +687,9 @@ of the data, and our results depend on how exactly we split the datasets.
 So how can we make this more robust?
 ---
 # Cross-validation
-.padding-top[
-![:scale 100%](images/kfold_cv.png)]
+.center[
+![:scale 80%](images/cross_validation_new.png)
+]
 ???
 The answer is of course cross-validation. In cross-validation, you split
 your data into multiple folds, usually 5 or 10, and built multiple models.
@@ -741,7 +719,7 @@ con: slower
 class: center, some-space
 # Cross-validation + test set
 
-![:scale 70%](images/grid_search_cross_validation.png)
+![:scale 105%](images/grid_search_cross_validation_new.png)
 
 ???
 Here is how the workflow looks like when we are using five-fold
@@ -973,35 +951,13 @@ This is also helpful if your data is very imbalanced. If some of the
 classes are very rare, it could otherwise happen that a class is not
 present at all in a particular fold.
 ---
-# Defaults in scikit-learn
-
-- 3-fold is the deprecated default, 5-fold in 0.22
-- For classification cross-validation is stratified
-- train_test_split has stratify option:
-train_test_split(X, y, stratify=y)
-
-- No shuffle by default!
-
-???
-Before we go to the other strategies, I wanted to point out the default
-behavior in scikit-learn.
-By default, all cross-validation strategies are three-fold.
-If you do cross-validation for classification, it will be stratified
-by default.
-Because of how the interface is done, that’s not true for
-train_test_split and if you want a stratified train_test_split, which
-is always a good idea, you should use stratify=y
-Another thing that’s important to keep in mind is that by default
-scikit-learn doesn’t shuffle! So if you run cross-validation twice
-with the default parameters, it will yield exactly the same results.
----
 class: spacious
 # Repeated KFold and LeaveOneOut
 
-- LeaveOneOut : KFold(n_folds=n_samples)
+- LeaveOneOut : KFold(n_folds=n_samples) <br \>
 High variance, takes a long time
 
-- Better: RepeatedKFold.
+- Better: RepeatedKFold. <br \>
 Apply KFold or StratifiedKFold multiple times with shuffled data. Reduces
 variance!
 
@@ -1069,6 +1025,27 @@ chunks of data from the past and making predictions on the next
 chunk. This is quite different from the other was to do cross-validation,
 in that the training sets are all overlapping, but it’s more appropriate
 for time-series.
+---
+class: spacious
+# Defaults in scikit-learn
+
+- 5-fold in 0.22 (used to be 3 fold)
+- For classification cross-validation is stratified
+- train_test_split has stratify option:
+train_test_split(X, y, stratify=y)
+
+- No shuffle by default!
+
+???
+By default, all cross-validation strategies are five fold.
+If you do cross-validation for classification, it will be stratified
+by default.
+Because of how the interface is done, that’s not true for
+train_test_split and if you want a stratified train_test_split, which
+is always a good idea, you should use stratify=y
+Another thing that’s important to keep in mind is that by default
+scikit-learn doesn’t shuffle! So if you run cross-validation twice
+with the default parameters, it will yield exactly the same results.
 ---
 # Using Cross-Validation Generators
 

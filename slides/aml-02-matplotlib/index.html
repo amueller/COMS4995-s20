@@ -569,14 +569,14 @@ ax = plt.subplot(n, m, i) # or plt.subplot(nmi)
 # (1-based index)
 
 ax11 = plt.subplot(2, 2, 1)
-ax21 = plt.subplot(2, 2, 2)
-ax12 = plt.subplot(2, 2, 3)
+ax12 = plt.subplot(2, 2, 2)
+ax21 = plt.subplot(2, 2, 3)
 ax22 = plt.subplot(2, 2, 4)
 ```
 equivalent:
 ```python
 fig, axes = plt.subplots(2, 2)
-ax11, ax21, ax12, ax22 = axes.ravel()
+ax11, ax12, ax21, ax22 = axes.ravel()
 ```
 ]
 .narrow-right-column[
@@ -609,7 +609,7 @@ ax = plt.subplot(n, m, i) # or plt.subplot(nmi)
 .left-column[
 ```python
 ax11 = plt.subplot(2, 2, 1)
-ax21 = plt.subplot(2, 2, 2)
+ax12 = plt.subplot(2, 2, 2)
 ax2 = plt.subplot(2, 1, 2)
 ```
 ]

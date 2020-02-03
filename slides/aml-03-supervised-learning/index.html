@@ -30,9 +30,8 @@ model evaluation and model selection.
 
 FIXME:
 More details on implementing cross-validation?
-Grouped cross-validation?
-FIXME window for time
-FIXME motivate for time / non-iid
+FIXME sklearn API review / summary + pandas vs numpy?
+FIXME Add code for nested cross-validation
 FIXME IID vs not IID is relevant even with out "cross" validation for simple validation split
 FIXME writing your own
 FIXME ensemble approach to cross-validation?
@@ -302,7 +301,7 @@ model complexity and what to low model complexity? high n_neighbors =
 low complexity!
 ---
 
-# Computational Properties Neighbors
+# Computational Properties
 .left-column[
 ## Naive
 - fit: no time
@@ -367,18 +366,6 @@ What’s bad about this?
 memory scales with data, prediction speed scales with data :-/
 ---
 
-class: center, spacious
-# Overfitting and Underfitting
-
-![:scale 80%](images/overfitting_underfitting_cartoon_full.png)
-???
-Coming back to this chart, you usually find that non-parametric models
-are more likely to overfit, as they can increase their capacity to fit
-any dataset, while in some cases, a parametric model might not be able
-to fit some data.
-Again, neural networks are somewhat their own thing, as usually people
-choose networks that could learn any possible data.
----
 # So far: Train-test-split
 
 ![:scale 100%](images/train_test_split_new.png)
@@ -919,6 +906,20 @@ class: center
 Not necessarily obvious that there is a time component!
 Data collection usually happens over time!
 
+---
+![:scale 100%](images/time_series_walk_forward_cv.png)
+???
+Another common case of data that’s not independent is time
+series. Usually todays stock price is correlated with yesterdays and
+tomorrows. If you randomly split time series, this makes predictions
+deceivingly simple. In applications, you usually have data up to some
+point, and then try to make predictions for the future, in other words,
+you’re trying to make a forecast.
+The TimeSeriesSplit in scikit-learn simulates that, by taking increasing
+chunks of data from the past and making predictions on the next
+chunk. This is quite different from the other was to do cross-validation,
+in that the training sets are all overlapping, but it’s more appropriate
+for time-series.
 ---
 ![:scale 100%](images/time_series_cv.png)
 

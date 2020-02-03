@@ -33,6 +33,7 @@ More details on implementing cross-validation?
 Grouped cross-validation?
 FIXME window for time
 FIXME motivate for time / non-iid
+FIXME IID vs not IID is relevant even with out "cross" validation for simple validation split
 FIXME writing your own
 FIXME ensemble approach to cross-validation?
 FIXME risk minimization: two kinds of error (estimation and generalization)
@@ -852,7 +853,23 @@ class: center, middle
 
 ???
 ---
+# Grouped Data
+### Assume have data (medical, product, user...) from 5 cities
+- New York, San Francisco, Los Angeles, Chicago, Houston.
 
+We can assume data within a city is more correlated then between cities.
+
+### Usage Scenarios
+- Assume all future users will be in one of these cities: i.i.d.
+- Assume we want to generalize to predict for a new city: not i.i.d.
+
+???
+Shipped product in 4 cities. Might ship in another one?
+States: you have all the states, no new state will start to exist
+
+Similar thing for multiple measurements per patient.
+Or geospacial data.
+---
 ![:scale 100%](images/group_kfold.png)
 
 ???
@@ -872,6 +889,35 @@ In this example, there are four groups, and we want three folds. The
 data is divided such that each group is contained in exactly one fold.
 There are several other cross-validation methods in scikit-learn that
 use these groups.
+---
+class: center
+# Correlations in time (and/or space)
+
+![:scale 70%](images/time_series1.png)
+
+???
+Not necessarily obvious that there is a time component!
+Data collection usually happens over time!
+
+---
+class: center
+# Correlations in time (and/or space)
+
+![:scale 70%](images/time_series2.png)
+
+???
+Not necessarily obvious that there is a time component!
+Data collection usually happens over time!
+
+---
+class: center
+# Correlations in time (and/or space)
+
+![:scale 70%](images/time_series3.png)
+
+???
+Not necessarily obvious that there is a time component!
+Data collection usually happens over time!
 
 ---
 ![:scale 100%](images/time_series_cv.png)

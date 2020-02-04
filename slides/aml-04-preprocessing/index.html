@@ -30,17 +30,15 @@ models, and not to tree-based models, but it also applies to
 neural nets and kernel SVMs.
 
 FIXME: add quantile transformer
-FIXME: some slides have screenshots
-FIXME: target encoder from dirtycat or categorical encoder contrib package?
+FIXME making column encoding consistent in pandas the way kaggle says
+FIXME target encoder from dirtycat or categorical encoder contrib package?
 FIXME better example / explanation for target encoding
 FIXME add more complex grid-search pipeline example, add grid-searching over pipeline steps
 FIXME add grid-search column-transformer example
-FIXME add hashing, add Max number of columns
+FIXME add Max number of columns
 FIXME walk through example of frequency encoder better, call target encoder
 FIXME add ELS example about leaking information with feature selection!!!
-FIXME add code corresponding to correct and incorrect scaling of test data
 FIXME two table slide for target encoder really confusing
-
 
 ---
 class: center, middle
@@ -52,26 +50,10 @@ Coming up with features is difficult, time-consuming, requires expert knowledge.
 ---
 class: middle
 
-![:scale 90%](images/boston_scatter.png)
+![:scale 90%](images/house_price_scatter.png)
 
 
 ???
-Let’s take a look at the the boston housing dataset. The idea was to
-predict house prices. Here are the features on the x axis
-and the response, so price, on the y axis.
-
-What are some thing you can notice? (concentrated
-distributions, skewed distibutions, discrete variable,
-linear and non-linear effects, different scales)
-
-The last thing that we're going to do after we did all the
-preprocessing is a little bit more about feature engineering
-and how to add features. Feature engineering is most
-important if we have simple models like linear models. If
-you do something like support vector machines or neural
-networks, you probably don't have to do as much feature
-engineering the because the model can learn more complex
-things themselves.
 ---
 
 
@@ -88,7 +70,7 @@ N/A
 class: center, middle
 
 .center[
-![:scale 70%](images/boston_ranges.png)
+![:scale 70%](images/house_price_boxplot.png)
 ]
 
 
@@ -225,7 +207,7 @@ scaling by one divided by the maximum absolute value.
 
 ```python
 from sklearn.linear_model import Ridge
-X, y = boston.data, boston.target
+# Back to King Country house prices
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, random_state=0)
 
@@ -238,7 +220,7 @@ X_test_scaled = scaler.transform(X_test)
 ridge.score(X_test_scaled, y_test)
 ```
 ```
-0.634
+0.684
 ```
 
 ???
@@ -333,7 +315,7 @@ np.mean(scores), np.std(scores)
 ```
 
 ```
-(0.717, 0.125)
+(0.694, 0.027)
 
 ```
 
@@ -343,7 +325,7 @@ np.mean(scores), np.std(scores)
 ```
 
 ```
-(0.718, 0.127)
+(0.694, 0.027)
 
 ```
 
@@ -354,7 +336,7 @@ np.mean(scores), np.std(scores)
 ```
 
 ```
-(0.499, 0.146)
+(0.500, 0.039)
 
 ```
 
@@ -365,13 +347,13 @@ np.mean(scores), np.std(scores)
 ```
 
 ```
-(0.750, 0.106)
+(0.786, 0.030)
 
 ```
 
 ???
 
-Let’s apply the scaler to the Boston housing data.
+Let’s apply the scaler to the King Country housing data.
 
 First I used the StandardScaler to scale the training data.
 Then I applied ten-fold cross-validation to evaluate the
@@ -451,7 +433,7 @@ class: smaller
 
 ```python
 from sklearn.linear_model import Ridge
-X, y = boston.data, boston.target
+X, y = diabetes.data, diabetes.target
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 scaler = StandardScaler()
@@ -1407,7 +1389,7 @@ is dealing with different input distributions.
 class: left, middle
 
 .center[
-![:scale 85%](images/boston_scaled_box.png)
+![:scale 85%](images/house_price_scaled_box.png)
 ]
 
 ???
@@ -1431,7 +1413,7 @@ better what’s going on.
 class: left, middle
 
 .center[
-![:scale 90%](images/boston_hist.png)
+![:scale 90%](images/house_price_hist.png)
 ]
 
 ???
@@ -1484,13 +1466,13 @@ applicable to positive features.
 ---
 
 .wide-left-column[
-![:scale 85%](images/boston_hist.png)
+![:scale 85%](images/house_price_hist.png)
 ]
 
 .narrow-right-column[Before]
 .clear-column[]
 
-.wide-left-column[![:scale 85%](images/boston_hist_boxcox.png)]
+.wide-left-column[![:scale 85%](images/house_price_hist_boxcox.png)]
 .narrow-right-column[After]
 
 
@@ -1513,13 +1495,13 @@ sense, though.
 
 
 .wide-left-column[
-![:scale 85%](images/boston_scatter.png)
+![:scale 85%](images/house_price_scatter.png)
 ]
 
 .narrow-right-column[Before]
 .clear-column[]
 
-.wide-left-column[![:scale 85%](images/boston_bc_scaled_scatter.png)]
+.wide-left-column[![:scale 85%](images/house_price_bc_scaled_scatter.png)]
 .narrow-right-column[After]
 
 
@@ -1533,7 +1515,8 @@ The dis, lstat and crim relationships now look a bit more
 obvious and linear.
 
 ---
-
+class: center, middle
+# Questions?
 
 
     </textarea>

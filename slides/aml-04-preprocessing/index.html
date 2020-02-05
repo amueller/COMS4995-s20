@@ -29,16 +29,11 @@ What we’re talking about today mostly applies to linear
 models, and not to tree-based models, but it also applies to
 neural nets and kernel SVMs.
 
-FIXME: add quantile transformer
 FIXME making column encoding consistent in pandas the way kaggle says
-FIXME target encoder from dirtycat or categorical encoder contrib package?
-FIXME better example / explanation for target encoding
-FIXME add more complex grid-search pipeline example, add grid-searching over pipeline steps
+FIXME target encoder be more clear on how to transform test set
+FIXME add column transformer full syntax
 FIXME add grid-search column-transformer example
 FIXME add Max number of columns
-FIXME walk through example of frequency encoder better, call target encoder
-FIXME add ELS example about leaking information with feature selection!!!
-FIXME two table slide for target encoder really confusing
 
 ---
 class: center, middle
@@ -436,7 +431,7 @@ class: smallest
 .left-column[
 ```python
 # BAD!
-select.fit(X)  # includes the cv test parts!
+select.fit(X, y)  # includes the cv test parts!
 X_sel = select.transform(X)
 scores = []
 for train, test in cv.split(X, y):
@@ -450,7 +445,7 @@ for train, test in cv.split(X, y):
 # GOOD!
 scores = []
 for train, test in cv.split(X, y):
-    select.fit(X[train])
+    select.fit(X[train], y[train])
     X_sel_train = select.transform(X[train])
     ridge = Ridge().fit(X_sel_train, y[train])
     X_sel_test = select.transform(X[test])
@@ -583,7 +578,7 @@ class: smallest
 .left-column[
 ```python
 # BAD!
-select.fit(X)  # includes the cv test parts!
+select.fit(X, y)  # includes the cv test parts!
 X_sel = select.transform(X)
 scores = []
 for train, test in cv.split(X, y):
@@ -608,7 +603,7 @@ np.mean(cross_val_score(Ridge(), X_selected, y))
 # GOOD!
 scores = []
 for train, test in cv.split(X, y):
-    select.fit(X[train])
+    select.fit(X[train], y[train])
     X_sel_train = select.transform(X[train])
     ridge = Ridge().fit(X_sel_train, y[train])
     X_sel_test = select.transform(X[test])
@@ -618,8 +613,7 @@ for train, test in cv.split(X, y):
 Same as:
 
 ```python
-pipe = Pipeline([("select", select),
-                 ("ridge", Ridge())])
+pipe = make_pipeline(select, Ridge())
 np.mean(cross_val_score(pipe, X, y))
 ```
 ```
@@ -649,14 +643,14 @@ knn_pipe = make_pipeline(StandardScaler(), KNeighborsRegressor())
 print(knn_pipe.steps)
 ```
 ```
-[('standardscaler', StandardScaler(with_mean=True, with_std=True)),
- ('kneighborsregressor', KNeighborsRegressor(algorithm='auto', ...))]
+[('standardscaler', StandardScaler()),
+ ('kneighborsregressor', KNeighborsRegressor())]
 ```
 
 ```python
 from sklearn.pipeline import Pipeline
-pipe = Pipeline((("scaler", StandardScaler()),
-                 ("regressor", KNeighborsRegressor)))
+pipe = Pipeline([("scaler", StandardScaler()),
+                 ("regressor", KNeighborsRegressor())])
 ```
 
 ???
@@ -887,7 +881,7 @@ df
 <table border="1" class="dataframe">
     <thead>
       <tr style="text-align: right;">
-      <th></th><th>boro</th><th>salary</th><th>vegan</th></tr>
+      <th></th><th>boro_ordinal</th><th>salary</th><th>vegan</th></tr>
     </thead>
     <tbody>
     <tr><th>0</th><td>2</td><td>103</td><td>No</td></tr>

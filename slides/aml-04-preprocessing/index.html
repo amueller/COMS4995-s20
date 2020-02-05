@@ -385,18 +385,79 @@ I want to talk a bit more about preprocessing and
 cross-validation here, and introduce pipelines.
 
 ---
+class: smallest, compact
+# A common errror
+```python
+print(X.shape)
+```
 
-class: some-space
+```
+(100, 10000)
+```
+
+```python
+# select most informative 5% of features
+from sklearn.feature_selection import SelectPercentile, f_regression
+select = SelectPercentile(score_func=f_regression, percentile=5)
+select.fit(X, y)
+X_selected = select.transform(X)
+print(X_selected.shape)
+```
+
+```
+(100, 500)
+```
+
+```python
+from sklearn.model_selection import cross_val_score
+from sklearn.linear_model import Ridge
+np.mean(cross_val_score(Ridge(), X_selected, y))
+```
+
+```
+0.90
+```
+
+```python
+ridge = Ridge().fit(X_selected, y)
+X_test_selected = select.transform(X_test)
+ridge.score(X_test_selected, y_test)
+```
+
+```
+-0.18
+```
+
+---
+class: smallest
 
 #Leaking Information
 
 .left-column[
-Information Leak
-![:scale 100%](images/information_leak_preprocessing.png)
+```python
+# BAD!
+select.fit(X)  # includes the cv test parts!
+X_sel = select.transform(X)
+scores = []
+for train, test in cv.split(X, y):
+    ridge = Ridge().fit(X_sel[train], y[train])
+    score = ridge.score(X_sel[test], y[test])
+    scores.append(score)
+```
 ]
 .right-column[
-No Information leakage
-![:scale 100%](images/no_information_leak_preprocessing.png)]
+```python
+# GOOD!
+scores = []
+for train, test in cv.split(X, y):
+    select.fit(X[train])
+    X_sel_train = select.transform(X[train])
+    ridge = Ridge().fit(X_sel_train, y[train])
+    X_sel_test = select.transform(X[test])
+    score = ridge.score(X_sel_test, y[test])
+    scores.append(score)
+```
+]
 
 .reset-column[
 Need to include preprocessing in cross-validation !
@@ -432,9 +493,9 @@ it right from the start.
 class: smaller
 
 ```python
+# Housing data example
 from sklearn.linear_model import Ridge
-X, y = diabetes.data, diabetes.target
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+X, y = df, target
 
 scaler = StandardScaler()
 scaler.fit(X_train)
@@ -445,7 +506,7 @@ X_test_scaled = scaler.transform(X_test)
 ridge.score(X_test_scaled, y_test)
 ```
 ```
-0.634
+0.684
 ```
 
 ```python
@@ -455,7 +516,7 @@ pipe.fit(X_train, y_train)
 pipe.score(X_test, y_test)
 ```
 ```
-0.634
+0.684
 ```
 
 ???
@@ -516,19 +577,56 @@ it’s really just doing “the right thing”to apply multiple
 transformation steps.
 
 ---
+class: smallest
+# Undoing our feature selection mistake
 
-.padding-top[
+.left-column[
+```python
+# BAD!
+select.fit(X)  # includes the cv test parts!
+X_sel = select.transform(X)
+scores = []
+for train, test in cv.split(X, y):
+    ridge = Ridge().fit(X_sel[train], y[train])
+    score = ridge.score(X_sel[test], y[test])
+    scores.append(score)
+```
+Same as:
 
 ```python
-from sklearn.neighbors import KNeighborsRegressor
-knn_pipe = make_pipeline(StandardScaler(), KNeighborsRegressor())
-scores = cross_val_score(knn_pipe, X_train, y_train, cv=10)
-np.mean(scores), np.std(scores)
+select.fit(X, y)
+X_selected = select.transform(X, y)
+np.mean(cross_val_score(Ridge(), X_selected, y))
 ```
+
 ```
-(0.745, 0.106)
+0.90
 ```
 ]
+.right-column[
+```python
+# GOOD!
+scores = []
+for train, test in cv.split(X, y):
+    select.fit(X[train])
+    X_sel_train = select.transform(X[train])
+    ridge = Ridge().fit(X_sel_train, y[train])
+    X_sel_test = select.transform(X[test])
+    score = ridge.score(X_sel_test, y[test])
+    scores.append(score)
+```
+Same as:
+
+```python
+pipe = Pipeline([("select", select),
+                 ("ridge", Ridge())])
+np.mean(cross_val_score(pipe, X, y))
+```
+```
+-0.079
+```
+]
+
 ???
 
 How does that help with the cross-validation problem?
@@ -1139,22 +1237,20 @@ a continuous. If you have very high categorical variables
 with many levels, maybe it keeping it as an integer might
 make more sense.
 ---
-class: center, middle
 
-# More encodings for categorical features:
-## http://contrib.scikit-learn.org/categorical-encoding/
+# Target Encoding (Impact Encoding)
+
+![:scale 100%](images/zip_code_prices.png)
+
 ---
 class: some-space
-
-#Target-Based Encoding
-
+# Target Encoding (Impact Encoding)
 - For high cardinality categorical features
-- Example: US states, given low samples
-- Instead of 50 one-hot variables, one “response encoded” variable.
+- Instead of 70 one-hot variables, one “response encoded” variable.
 - For regression:
-  - "people in this state have an average response of y”
+  - "average price in zip code”
 - Binary classification:
-  – “people in this state have likelihood p for class 1”
+  – “building in this zip code have a likelihood p for class 1”
 - Multiclass:
   – One feature per class: probability distribution
 
@@ -1183,195 +1279,118 @@ people in each of the classes. So in multi-class, you get
 one new feature per class and you count for each state how
 many people in this state are classified for each of them.
 
+---
+class: center, middle
 
+# More encodings for categorical features:
+## http://contrib.scikit-learn.org/categorical-encoding/
+
+---
+# Load data, include ZIP code
+```python
+data = fetch_openml("house_sales", as_frame=True)
+X = data.frame.drop(['date', 'price'], axis=1)
+X_train, X_test, y_train, y_test = train_test_split(X, target)
+X_train.columns
+```
+```
+Index(['bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'floors',
+       'waterfront', 'view', 'condition', 'grade', 'sqft_above',
+       'sqft_basement', 'yr_built', 'yr_renovated', 'zipcode', 'lat',
+       'long', 'sqft_living15', 'sqft_lot15'],
+      dtype='object')
+```
 ---
 class: compact
-# Example: Adult census, native-country
-.smallest[
+.tiny[
 ```python
-data = pd.read_csv("adult.csv")
-data.columns
+X_train.head()
 ```
-```
-Index(['age', 'workclass', 'education', 'education-num', 'marital-status',
-'occupation', 'relationship', 'race', 'gender', 'capital-gain', 'capital-loss',
-'hours-per-week', 'native-country', 'income'], dtype='object')
-```
-```python
-data['native-country'].value_counts()
-```
-.left-column[
-```
- United-States                 29170
- Mexico                          643
- ?                               583
- Philippines                     198
- Germany                         137
- Canada                          121
- Puerto-Rico                     114
- El-Salvador                     106
- India                           100
- Cuba                             95
- England                          90
- Jamaica                          81
- South                            80
- China                            75
- Italy                            73
- Dominican-Republic               70
-```
-]
-.right-column[
-```
- Vietnam                          67
- Guatemala                        64
- Japan                            62
- Poland                           60
- Columbia                         59
- Taiwan                           51
- Haiti                            44
- Iran                             43
- Portugal                         37
- Nicaragua                        34
- Peru                             31
- France                           29
- Greece                           29
- Ecuador                          28
- Ireland                          24
- Hong                             20
- Trinadad&Tobago                  19
- Cambodia                         19
- Thailand                         18
- Laos                             18
- Yugoslavia                       16
- Outlying-US(Guam-USVI-etc)       14
- Hungary                          13
- Honduras                         13
- Scotland                         12
- Holand-Netherlands                1
-Name: native-country, dtype: int64
-```
-]
-]
-???
-A slightly different example which is the adult census. This
-is the dataset with stuff about jobs of adults living in the
-US and the idea is to predict whether their income is
-smaller or bigger than 50K a year. One of the variables in
-this is the country of origin. Most of the people in this
-dataset come from the US but there's a bunch of people from
-other countries. Using the response encoding instead of
-adding like 15 new features I only encode it as one new
-feature.
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th><th>bedrooms</th><th>bathrooms</th><th>sqft_living</th><th>sqft_lot</th><th>floors</th><th>...</th><th>zipcode</th><th>lat</th><th>long</th><th>sqft_living15</th><th>sqft_lot15</th></tr>
+  </thead>
+  <tbody>
+    <tr><th>10666</th><td>4.0</td><td>2.50</td><td>2160.0</td><td>7000.0</td><td>2.0</td><td>...</td><td>98029.0</td><td>47.566</td><td>-122.013</td><td>2300.0</td><td>7440.0</td></tr>
+    <tr><th>19108</th><td>4.0</td><td>4.25</td><td>3250.0</td><td>11780.0</td><td>2.0</td><td>...</td><td>98004.0</td><td>47.632</td><td>-122.203</td><td>1800.0</td><td>9000.0</td></tr>
+    <tr><th>20132</th><td>3.0</td><td>2.50</td><td>1280.0</td><td>1920.0</td><td>3.0</td><td>...</td><td>98105.0</td><td>47.662</td><td>-122.324</td><td>1450.0</td><td>1900.0</td></tr>
+    <tr><th>16169</th><td>4.0</td><td>1.50</td><td>1220.0</td><td>9600.0</td><td>1.0</td><td>...</td><td>98014.0</td><td>47.646</td><td>-121.909</td><td>1180.0</td><td>9000.0</td></tr>
+    <tr><th>16890</th><td>3.0</td><td>1.50</td><td>2120.0</td><td>6290.0</td><td>1.0</td><td>...</td><td>98108.0</td><td>47.566</td><td>-122.318</td><td>1620.0</td><td>5400.0</td></tr>
+  </tbody>
+</table>
 
+```python
+te = TargetEncoder(cols='zipcode').fit(X_train, y_train)
+te.transform(X_train).head()
+```
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th><th>bedrooms</th><th>bathrooms</th><th>sqft_living</th><th>sqft_lot</th><th>floors</th><th>...</th><th>zipcode</th><th>lat</th><th>long</th><th>sqft_living15</th><th>sqft_lot15</th></tr>
+  </thead>
+  <tbody>
+    <tr><th>10666</th><td>4.0</td><td>2.50</td><td>2160.0</td><td>7000.0</td><td>2.0</td><td>...</td><td>6.164e+05</td><td>47.566</td><td>-122.013</td><td>2300.0</td><td>7440.0</td></tr>
+    <tr><th>19108</th><td>4.0</td><td>4.25</td><td>3250.0</td><td>11780.0</td><td>2.0</td><td>...</td><td>1.357e+06</td><td>47.632</td><td>-122.203</td><td>1800.0</td><td>9000.0</td></tr>
+    <tr><th>20132</th><td>3.0</td><td>2.50</td><td>1280.0</td><td>1920.0</td><td>3.0</td><td>...</td><td>8.503e+05</td><td>47.662</td><td>-122.324</td><td>1450.0</td><td>1900.0</td></tr>
+    <tr><th>16169</th><td>4.0</td><td>1.50</td><td>1220.0</td><td>9600.0</td><td>1.0</td><td>...</td><td>4.464e+05</td><td>47.646</td><td>-121.909</td><td>1180.0</td><td>9000.0</td></tr>
+    <tr><th>16890</th><td>3.0</td><td>1.50</td><td>2120.0</td><td>6290.0</td><td>1.0</td><td>...</td><td>3.604e+05</td><td>47.566</td><td>-122.318</td><td>1620.0</td><td>5400.0</td></tr>
+  </tbody>
+</table>
+
+```python
+y_train.groupby(X_train.zipcode).mean()[X_train.head().zipcode])
+```
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>zipcode</th><th>98029.0</th><th>98004.0</th><th>98105.0</th><th>98014.0</th><th>98108.0</th></tr>
+  </thead>
+  <tbody>
+    <tr><th>price</th><td>616356.941</td><td>1.357e+06</td><td>850306.816</td><td>446448.065</td><td>360416.811</td></tr>
+  </tbody>
+</table>
+
+]
 
 ---
-.smallest[
-.left-column[
+class: smallest
+```python
+X = data.frame.drop(['date', 'price', 'zipcode'], axis=1)
+scores = cross_val_score(Ridge(), X, target)
+np.mean(scores)
 ```
-                              <=50K      >50K
- ?                           0.749571  0.250429
- Cambodia                    0.631579  0.368421
- Canada                      0.677686  0.322314
- China                       0.733333  0.266667
- Columbia                    0.966102  0.033898
- Cuba                        0.736842  0.263158
- Dominican-Republic          0.971429  0.028571
- Ecuador                     0.857143  0.142857
- El-Salvador                 0.915094  0.084906
- England                     0.666667  0.333333
- France                      0.586207  0.413793
- Germany                     0.678832  0.321168
- Greece                      0.724138  0.275862
- Guatemala                   0.953125  0.046875
- Haiti                       0.909091  0.090909
- Holand-Netherlands          1.000000  0.000000
- Honduras                    0.923077  0.076923
- Hong                        0.700000  0.300000
- Hungary                     0.769231  0.230769
- India                       0.600000  0.400000
- Iran                        0.581395  0.418605
- Ireland                     0.791667  0.208333
- Italy                       0.657534  0.342466
- Jamaica                     0.876543  0.123457
- Japan                       0.612903  0.387097
- Laos                        0.888889  0.111111
- Mexico                      0.948678  0.051322
- Nicaragua                   0.941176  0.058824
- Outlying-US(Guam-USVI-etc)  1.000000  0.000000
- Peru                        0.935484  0.064516
- Philippines                 0.691919  0.308081
- Poland                      0.800000  0.200000
- Portugal                    0.891892  0.108108
- Puerto-Rico                 0.894737  0.105263
- Scotland                    0.750000  0.250000
- South                       0.800000  0.200000
- Taiwan                      0.607843  0.392157
- Thailand                    0.833333  0.166667
- Trinadad&Tobago             0.894737  0.105263
- United-States               0.754165  0.245835
- Vietnam                     0.925373  0.074627
- Yugoslavia                  0.625000  0.375000
 ```
-]]
+0.69
+```
 --
 
-.smallest[
-.right-column[
+```python
+from sklearn.compose import make_column_transformer
+from sklearn.preprocessing import OneHotEncoder
+X = data.frame.drop(['date', 'price'], axis=1)
+
+ct = make_column_transformer((OneHotEncoder(), ['zipcode']), remainder='passthrough')
+pipe_ohe = make_pipeline(ct, Ridge())
+scores = cross_val_score(pipe_ohe, X, target)
+np.mean(scores)
 ```
-       frequency               native-country  income
-        0.245835                United-States   <=50K
-        0.245835                United-States   <=50K
-        0.245835                United-States   <=50K
-        0.245835                United-States   <=50K
-        0.263158                         Cuba   <=50K
-        0.245835                United-States   <=50K
-        0.123457                      Jamaica   <=50K
-        0.245835                United-States    >50K
-        0.245835                United-States    >50K
-        0.245835                United-States    >50K
-        0.245835                United-States    >50K
-        0.400000                        India    >50K
-        0.245835                United-States   <=50K
-        0.245835                United-States   <=50K
-        0.250429                            ?    >50K
-        0.051322                       Mexico   <=50K
-        0.245835                United-States   <=50K
-        0.245835                United-States   <=50K
-        0.245835                United-States   <=50K
-        0.245835                United-States    >50K
-        0.245835                United-States    >50K
-        0.245835                United-States   <=50K
-        0.245835                United-States   <=50K
-        0.245835                United-States   <=50K
-        0.245835                United-States   <=50K
-        0.245835                United-States    >50K
-        0.245835                United-States   <=50K
-        0.200000                        South    >50K
-        0.245835                United-States   <=50K
-        0.245835                United-States   <=50K
-        0.245835                United-States   <=50K
-        0.245835                United-States   <=50K
-        0.245835                United-States   <=50K
-        0.245835                United-States   <=50K
-        0.245835                United-States   <=50K
 ```
-]]
-???
-FIXME this slide is terribly confusing
+0.52
+```
 
+--
 
-So the way I do this is for each country that someone can be
-from, I can look at how many people make less than 50k and
-more than 50k. People from the Netherlands alway make less
-than 50k in this dataset. People from Iran doing pretty well
-prepared, people from Ireland are not doing so well.
-
-For each native country, I just added a feature that I call
-frequency. And if it's in the States, I give the feature
-value that corresponds to the United States in the table. So
-everybody from the United States will have the same feature
-and so on. And so now I just have a single feature that
-hopefully encodes the information of the country.
+```python
+from category_encoders import TargetEncoder
+X = data.frame.drop(['date', 'price'], axis=1)
+pipe_target = make_pipeline(TargetEncoder(cols='zipcode'), Ridge())
+scores = cross_val_score(pipe_target, X, target)
+np.mean(scores)
+```
+```
+0.78
+```
 ---
 
 class: middle

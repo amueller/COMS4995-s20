@@ -779,12 +779,59 @@ on Wednesday.
 ]
 ]
 ---
+# Triazine Dataset
+
+```python
+triazines = fetch_openml('triazines')
+triazines.data.shape
+```
+```
+(186, 60)
+```
+```python
+pd.Series(triazines.target).hist()
+```
+.center[
+![:scale 40%](images/triazine_bar.png)
+]
+
+---
+```python
+X_train, X_test, y_train, y_test = train_test_split(triazines.data, triazines.target, random_state=0)
+
+cross_val_score(LinearRegression(), X_train, y_train, cv=5)
+```
+```
+array([-4.749e+24, -9.224e+24, -7.317e+23, -2.318e+23, -2.733e+22])
+```
+```python
+cross_val_score(Ridge(), X_train, y_train, cv=5)
+```
+```
+array([0.263, 0.455, 0.024, 0.23 , 0.036])
+```
+---
+```python
+param_grid = {'alpha': np.logspace(-3, 3, 13)}
+
+grid = GridSearchCV(Ridge(), param_grid, cv=RepeatedKFold(10, 5),
+                    return_train_score=True)
+grid.fit(X_train, y_train)
+```
+.center[
+![:scale 40%](images/ridge_alpha_triazine.png)
+]
+
+---
+
 # Plotting coefficient values (LR)
+
 
 ```python
 lr = LinearRegression().fit(X_train, y_train)
-plt.scatter(range(X_poly.shape[1]),
-            lr.coef_, c=np.sign(lr.coef_), cmap="bwr_r")
+plt.scatter(range(X_train.shape[1]), lr.coef_,
+            c=np.sign(lr.coef_), cmap='bwr_r')
+
 ```
 .center[
 ![:scale 55%](images/lr_coefficients_large.png)
@@ -815,11 +862,11 @@ reasonable and all the houses only cost like $70,000.
 
 ```python
 ridge = grid.best_estimator_
-plt.scatter(range(X_poly.shape[1]), ridge.coef_,
+plt.scatter(range(X_train.shape[1]), ridge.coef_,
             c=np.sign(ridge.coef_), cmap="bwr_r")
 ```
 .center[
-![:scale 60%](images/ridge_coefficients.png)
+![:scale 55%](images/ridge_coefficients.png)
 ]
 
 ???
@@ -850,11 +897,11 @@ negative effect, it can't have both.
 ---
 ```python
 ridge100 = Ridge(alpha=100).fit(X_train, y_train)
-ridge1 = Ridge(alpha=1).fit(X_train, y_train)
+ridge1 = Ridge(alpha=.1).fit(X_train, y_train)
 plt.figure(figsize=(8, 4))
 
-plt.plot(ridge1.coef_, 'o', label="alpha=1")
-plt.plot(ridge.coef_, 'o', label="alpha=14")
+plt.plot(ridge1.coef_, 'o', label="alpha=.1")
+plt.plot(ridge.coef_, 'o', label=f"alpha={ridge.alpha:.2f}")
 plt.plot(ridge100.coef_, 'o', label="alpha=100")
 plt.legend()
 ```
@@ -1013,14 +1060,7 @@ understand why does this lead to exact zeros hop.
 ---
 # Grid-Search for Lasso
 ```python
-param_grid = {'alpha': np.logspace(-3, 0, 13)}
-print(param_grid)
-```
-```
-{'alpha': array([ 0.001,  0.003, 0.01, 0.032, 0.1, 0.316, 1., 3.162,
-                    10., 31.623, 100., 316.228, 1000.])}
-```
-```python
+param_grid = {'alpha': np.logspace(-5, 0, 10)}
 grid = GridSearchCV(Lasso(normalize=True), param_grid, cv=10)
 grid.fit(X_train, y_train)
 
@@ -1028,8 +1068,8 @@ print(grid.best_params_)
 print(grid.best_score_)
 ```
 ```
-{'alpha': 0.001}
-0.837
+{'alpha': 0.0016}
+0.163
 ```
 
 
@@ -1039,7 +1079,7 @@ usually don't work very well for Lasso. I use alpha on the
 logarithmic grid. I fitted and then I get the best score.
 ---
 
-![:scale 90%](images/lasso_alpha_search.png)
+![:scale 90%](images/lasso_alpha_triazine.png)
 
 ???
 Looking at the training test set performance, you can see
@@ -1054,12 +1094,12 @@ is about as good as the ridge performance.
 ]
 
 ```python
-print(X_poly.shape)
+print(X_train.shape)
 np.sum(lasso.coef_ != 0)
 ```
 ```
-(506, 104)
-64
+(139, 60)
+13
 ```
 
 ???
@@ -1136,7 +1176,7 @@ pretty well often.
 ```python
 from sklearn.linear_model import ElasticNet
 param_grid = {'alpha': np.logspace(-4, -1, 10),
-              'l1_ratio': [0.01, .1, .5, .9, .98, 1]}
+              'l1_ratio': [0.01, .1, .5, .8, .9, .95, .98, 1]}
 
 grid = GridSearchCV(ElasticNet(), param_grid, cv=10)
 grid.fit(X_train, y_train)
@@ -1145,8 +1185,13 @@ print(grid.best_params_)
 print(grid.best_score_)
 ```
 ```
-{'alpha': 0.0001, 'l1_ratio': 0.01}
-0.718
+{'alpha': 0.001, 'l1_ratio': 0.9}
+0.100
+```python
+(grid.best_estimator_.coef_!= 0).sum()
+```
+10
+
 ```
 ???
 Here is me doing a grid search. If you have two parameters

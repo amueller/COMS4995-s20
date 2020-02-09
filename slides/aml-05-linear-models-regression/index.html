@@ -33,9 +33,9 @@ But first we'll start with some more preprocessing that we didn't get
 to last week, in particular dealing with missing values, which you'll need for the homework.
 
 
-FIXME polynomial features are used in linear model part. Move explanation there?
-Or hold off on poly features at that place and use different data!!!!
-FIXME remove 3d plots!
+FIXME sync with workshop
+FIXME imputation for categorical data
+FIXME better motivation for log
 FIXME add missing value indicator
 FIXME better explanations for imputation, in particular iterative!
 FIXME L1 explanation unclear
@@ -380,9 +380,6 @@ Here's a comparison on the iris dataset again.
 This is a very artificial example and is only meant to illustrate the ideas.
 In practice, using the mean or median is actually quite decent.
 ---
-class: left, middle
-
----
 class: center, middle
 
 # Linear Models
@@ -531,17 +528,17 @@ model to fit the data more, and we're on the right side of
 the graph.
 
 ---
-# Boston Housing Dataset
+# Ames Housing Dataset
 
-![:scale 70%](images/boston_housing_scatter.png)
-.smaller[
+![:scale 80%](images/ames_housing_scatter.png)
+.tiny[
 ```python
 print(X.shape)
 print(y.shape)
 ```
 ```
-(506, 13)
-(506,)
+(2195, 79)
+(2195,)
 ```
 ]
 ???
@@ -577,7 +574,7 @@ features have very different scales. Here's a box plot that
 shows that even more clearly.
 ---
 
-![:scale 80%](images/boston_scaling.png)
+![:scale 100%](images/ames_scaling.png)
 
 ???
 That's something that will trip up the distance based models
@@ -594,42 +591,6 @@ get rid of this effect. We'll talk about that and other
 preprocessing methods in-depth on Wednesday next week. Today
 I'm mostly gonna ignore this. But let's get started with
 Linear Regression
-
----
-class: middle, spacious
-
-
-```python
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, random_state=0)
-
-np.mean(cross_val_score(LinearRegression(), X_train, y_train, cv=10))
-```
-```
-0.717
-```
-
-
-```python
-np.mean(cross_val_score(Ridge(), X_train, y_train, cv=10))
-```
-```
-0.715
-```
-???
-Let’s look at two simple models. Linear regression and Ridge
-regression. What I've done is I’ve split the data into
-training and test set and used 10 fold cross-validation to
-evaluate them. Here I use cross_val_score together with the
-model, the training data, training labels, and 10 fold
-cross-validation. This will return 10 scores and I'm going
-to compute the mean of them. I'm doing this for both linear
-regression and Ridge regression. Here is ridge regression
-uses a default value of alpha of 1. Here these two scores
-are quite similar.
 
 ---
 # Coefficient of determination R^2
@@ -662,59 +623,119 @@ better in general, though. Reducing anything to a single number
 is tricky.
 
 ---
-# Scaling
-
+class: smaller
+# Preprocessing
 ```python
-from sklearn.linear_model import Ridge
-from sklearn.preprocessing import StandardScaler
-X, y = boston.data, boston.target
+cat_preprocessing = make_pipeline(
+    SimpleImputer(strategy='constant', fill_value='NA'),
+    OneHotEncoder(handle_unknown='ignore'))
+
+cont_preprocessing = make_pipeline(
+    SimpleImputer(),
+    StandardScaler())
+
+preprocess = make_column_transformer(
+    (cat_preprocessing, make_column_selector(dtype_include='object')),
+    remainder=cont_preprocessing)
+
+
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, random_state=0)
+cross_val_score(
+    make_pipeline(preprocess, LinearRegression()),
+    X_train, y_train, cv=5)
+```
+```
+array([0.928, 0.927, 0.932, 0.898, 0.884])
+```
+---
+class: smaller
+# Skewed targets
+.left-column[
+```python
+y_train.hist(bins='auto')
+```
+![:scale 100%](images/ames_housing_price_hist.png)
 
-scaler = StandardScaler()
-scaler.fit(X_train)
-X_train_scaled = scaler.transform(X_train)
-ridge = Ridge().fit(X_train_scaled, y_train)
+]
+.right-column[
+```python
+np.log(y_train).hist(bins='auto')
+```
+![:scale 100%](images/ames_housing_price_hist_log.png)
 
-X_test_scaled = scaler.transform(X_test)
-ridge.score(X_test_scaled, y_test)
+]
+---
+class: middle, spacious
+```python
+cross_val_score(make_pipeline(preprocess, LinearRegression()),
+                X_train, y_train, cv=5)
+```
+```
+array([0.928, 0.927, 0.932, 0.898, 0.884])
+```
+
+```python
+from sklearn.compose import TransformedTargetRegressor
+log_regressor = TransformedTargetRegressor(
+    LinearRegression(), func=np.log, inverse_func=np.exp)
+cross_val_score(make_pipeline(preprocess, log_regressor),
+                X_train, y_train, cv=5)
+```
+```
+array([0.95 , 0.943, 0.941, 0.913, 0.922])
+
+```
+---
+# Linear Regression vs Ridge
+```python
+log_regressor = TransformedTargetRegressor(
+    LinearRegression(), func=np.log, inverse_func=np.exp)
+cross_val_score(make_pipeline(preprocess, log_regressor),
+                X_train, y_train, cv=5)
+
+```
+```
+array([0.95 , 0.943, 0.941, 0.913, 0.922])
+```
+```python
+log_ridge = TransformedTargetRegressor(
+    Ridge(), func=np.log, inverse_func=np.exp)
+cross_val_score(make_pipeline(preprocess, log_ridge),
+                X_train, y_train, cv=5)
+
+```
+```
+array([0.948, 0.95 , 0.941, 0.915, 0.931])
+
 ```
 ???
-If you want to scale the data, you can use StandardScaler
-for that. It makes the mean zero and the standard deviation
-one. It's an unsupervised model, so it only takes the data
-X_train to fit. Fitting just means computing mean and
-standard devitation. Then, we can scale the data using the
-transform method. Make sure that you fit the data only on
-the training set, and then transform the training and the
-test set. If you want to use scaling inside
-cross-validation, it's a little bit more tricky. As I said,
-more details next wednesday. I'm just mentioning this here
-because it might come in handy for the homework.
-
-Ok but so let's come back to the Ridge model. Above we just
-used the default setting for the parameter alpha, which is
-one. This is a reasonable default, but there is no reason
-why this should give us the optimum generalization
-performance on this problem. So it's a good idea to adjust
-the parameter. As we saw on Monday, we can easily do that
-with gridsearchCV.
+Let’s look at two simple models. Linear regression and Ridge
+regression. What I've done is I’ve split the data into
+training and test set and used 10 fold cross-validation to
+evaluate them. Here I use cross_val_score together with the
+model, the training data, training labels, and 10 fold
+cross-validation. This will return 10 scores and I'm going
+to compute the mean of them. I'm doing this for both linear
+regression and Ridge regression. Here is ridge regression
+uses a default value of alpha of 1. Here these two scores
+are quite similar.
 
 ---
-
 .smallest[
 ```python
-from sklearn.model_selection import GridSearchCV
-param_grid = {'alpha': np.logspace(-3, 3, 13)}
-print(param_grid)
+pipe = Pipeline([('preprocessing', preprocess), ('ridge', log_ridge)])
+param_grid = {'ridge__regressor__alpha': np.logspace(-3, 3, 13)}
+
+grid = GridSearchCV(pipe, param_grid, cv=RepeatedKFold(10, 5),
+                    return_train_score=True)
 ```
 ```
-{'alpha': array([ 0.001,  0.003, 0.01, 0.032, 0.1, 0.316, 1., 3.162,
-                    10., 31.623, 100., 316.228, 1000.])}
+{'ridge__regressor__alpha': array([ 0.001,  0.003, 0.01, 0.032, 0.1, 0.316, 1., 3.162,
+           10., 31.623, 100., 316.228, 1000.])}
 ```
 
 ```python
-grid = GridSearchCV(Ridge(), param_grid, cv=10)
 grid.fit(X_train, y_train)
 ```
 ]
@@ -748,84 +769,15 @@ little bit so that we can see the effect of the
 regularization. I’m going to modifying by using a polynomial
 expansion, again we're going to talk about a little bit more
 on Wednesday.
-
 ---
-# Adding features
-
-```python
-from sklearn.preprocessing import PolynomialFeatures, scale
-poly = PolynomialFeatures(include_bias=False)
-X_poly = poly.fit_transform(scale(X))
-print(X_poly.shape)
-X_train, X_test, y_train, y_test = train_test_split(X_poly, y)
-```
-```
-(506, 104)
-```
-```python
-np.mean(cross_val_score(LinearRegression(), X_train, y_train, cv=10))
-```
-```
-0.74
-```
-```python
-np.mean(cross_val_score(Ridge(), X_train, y_train, cv=10))
-```
-```
-0.76
-```
-
-???
-Basically, I'm adding a whole bunch of more features, which
-is the interaction between all pairs of features and to
-square for each feature. This allows me to learn not an only
-linear function, but any polynomial of degree 2 of the
-features, which gives me 104 features. Now there are way
-more features in relation to the training data size. It's
-still fewer features than data points, but unlike before
-now, they're in the same order of magnitude. Now, this is a
-problem that's much harder for linear regression without
-regularization. Keep in mind the power of the linear models
-really depends a lot on the dimensionality of the input
-space. Previously I had 16 degrees of freedom and now I have
-140 degrees of freedom, so I can learn a much more complex
-model now. You can also think about this in terms of a 2D
-problem, you draw a linear line, it seems to be very, very
-restrictive. But if you look at a very high dimensional
-space, if you have more features than samples, then you can
-solve any problem perfectly. So it's not restrictive at all.
-The powerfulness of the linear models depends a lot on the
-majority of the features.
-
----
-.center[
-![:scale 60%](images/ridge_alpha_search_poly.png)
+.padding-top[
+.left-column[
+![:scale 100%](images/ridge_alpha_search.png)
 ]
-.smaller[
-```python
-print(grid.best_params_)
-print(grid.best_score_)
-```
-```
-{'alpha': 31.6}
-0.83
-```
+.right-column[
+![:scale 100%](images/ridge_alpha_search_cv_runs.png)
 ]
-???
-Let's look at what happens if you do a Grid search. You can
-see a clear fit, hopefully, it looks to you a lot like the
-cartoon curve that I did before. If we increase alpha, the
-model gets less complex and the training performance goes
-down. But if I increase regularization, the test score goes
-up for a while and if I make it too strong, it goes down.
-You can also see that the standard deviation is much higher
-with less regularization than it is with more
-regularization. This is sort of a more robust model and it
-generalizes this better. Using regularization, I found the
-best alpha and the best R square. It actually improved quite
-a bit. The alpha doesn't really mean anything depending on
-how you scale your data, don't think too much about that.
-
+]
 ---
 # Plotting coefficient values (LR)
 

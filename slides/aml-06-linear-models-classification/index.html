@@ -1349,7 +1349,8 @@ two important parameters to tune is C and gamma.
 ```
 gamma : float, optional (default = "auto")
   Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
-  If gamma is 'auto' then 1/n_features will be used
+  if gamma='scale' (default) is passed then it uses 1 / (n_features * X.var())
+  as value of gamma
 ```
 ```python
 scaled_svc = make_pipeline(StandardScaler(), SVC())
@@ -1357,8 +1358,8 @@ print(np.mean(cross_val_score(SVC(), X_train, y_train, cv=10)))
 print(np.mean(cross_val_score(scaled_svc, X_train, y_train, cv=10)))
 ```
 ```
-0.578
-0.978
+0.987
+0.977
 ```
 ```python
 gamma = (1. / (X_train.shape[1] * X_train.var()))
@@ -1402,8 +1403,13 @@ param_grid = {'svc__C': np.logspace(-3, 2, 6),
               'svc__gamma': np.logspace(-3, 2, 6) / X_train.shape[0]}
 param_grid
 ```
-{'svc_C': array([   0.001,    0.01 ,    0.1  ,    1.   ,   10.   ,  100.   ]),
- 'svc_gamma': array([ 0.000001,  0.000007,  0.000074,  0.000742,  0.007424,  0.074239])}
+
+```json
+{'svc_C': array([0.001, 0.01, 0.1, 1., 10.,  100.]),
+ 'svc_gamma': array([ 0.000001, 0.000007, 0.000074,
+                      0.000742, 0.007424, 0.074239])}
+```
+
 ```python
 grid = GridSearchCV(scaled_svc, param_grid=param_grid, cv=10)
 grid.fit(X_train, y_train)

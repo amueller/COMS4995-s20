@@ -1258,7 +1258,7 @@ class:spacious
 - Kernel use inner products or distances.
 - StandardScaler or MinMaxScaler ftw
 - Gamma parameter in RBF directly relates to scaling
-of data and n_features – new default is `1/(X.std() * n_features)` but should be `1/X.var() * n_features)` 😞
+of data and n_features – the default is `1/(X.var() * n_features)`
 
 ???
 Nearly all of these kernels use the distance in the original

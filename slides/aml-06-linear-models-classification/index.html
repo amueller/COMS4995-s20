@@ -690,7 +690,7 @@ class: some-space
 # In sckit-learn
 
 - OvO: only SVC
-- OvR: default for all linear models
+- OvR: default for all linear models except for logistic regression
 - `LogisticRegression(multi_class='auto')`
 - `clf.decision_function` = $w^Tx + b$
 - `logreg.predict_proba`
@@ -1347,7 +1347,7 @@ two important parameters to tune is C and gamma.
 
 .smaller[
 ```
-gamma{‘scale’, ‘auto’} or float, optional (default=’scale’)
+gamma : {‘scale’, ‘auto’} or float, optional (default=’scale’)
   Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
   if gamma='scale' (default) is passed then it uses 1 / (n_features * X.var())
   as value of gamma

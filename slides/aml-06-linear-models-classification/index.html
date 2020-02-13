@@ -141,7 +141,7 @@ $$\log\left(\frac{p(y=1|x)}{p(y=-1|x)}\right) = w^T\textbf{x} + b$$
 
 $$p(y=1|\textbf{x}) = \frac{1}{1+e^{-w^T\textbf{x} -b }}$$
 
-`$$\min_{w \in ℝ^{p}, b \in \mathbb{R}} -\sum_{i=1}^n \log(\exp(-y_i(w^T \textbf{x}_i + b)) + 1)$$`
+`$$\min_{w \in ℝ^{p}, b \in \mathbb{R}} \sum_{i=1}^n \log(\exp(-y_i(w^T \textbf{x}_i + b)) + 1)$$`
 
 
 $$\hat{y} = \text{sign}(w^T\textbf{x} + b)$$
@@ -191,9 +191,9 @@ care about finding a simple solution.
 
 # Penalized Logistic Regression
 
-`$$\min_{w \in ℝ^{p}, b \in \mathbb{R}}-C \sum_{i=1}^n\log(\exp(-y_i(w^T \textbf{x}_i + b )) + 1) + ||w||_2^2$$`
+`$$\min_{w \in ℝ^{p}, b \in \mathbb{R}}C \sum_{i=1}^n\log(\exp(-y_i(w^T \textbf{x}_i + b )) + 1) + ||w||_2^2$$`
 
-`$$\min_{w \in ℝ^{p}, b \in \mathbb{R}}-C \sum_{i=1}^n\log(\exp(-y_i (w^T \textbf{x}_i + b)) + 1) + ||w||_1$$`
+`$$\min_{w \in ℝ^{p}, b \in \mathbb{R}}C \sum_{i=1}^n\log(\exp(-y_i (w^T \textbf{x}_i + b)) + 1) + ||w||_1$$`
 
 - C is inverse to alpha (or alpha / n_samples)
 
@@ -382,7 +382,7 @@ FIXME graph of not influencing the solution?
 class: center
 # Logistic Regression vs SVM
 .compact[
-`$$\min_{w \in ℝ^{p}, b \in \mathbb{R}}-C \sum_{i=1}^n\log(\exp(-y_i(w^T \textbf{x}_i+b)) + 1) + ||w||_2^2$$`
+`$$\min_{w \in ℝ^{p}, b \in \mathbb{R}}C \sum_{i=1}^n\log(\exp(-y_i(w^T \textbf{x}_i+b)) + 1) + ||w||_2^2$$`
 `$$\min_{w \in ℝ^{p}, b \in \mathbb{R}}C \sum_{i=1}^n\max(0,1-y_i(w^T \textbf{x}_i + b)) + ||w||_2^2$$`
 
 ![:scale 35%](images/binary_loss.png)
@@ -669,7 +669,7 @@ Probabilistic multi-class model:
 
 `$$\min_{w \in ℝ^{pk}, b \in \mathbb{R}^k} -\sum_{i=1}^n \log(p(y=y_i|x_i, w, b))$$`
 
-$$\hat{y} = \text{arg} \max_{i=1,...,k} \textbf{w}_i\textbf{x} + b_i$$
+$$\hat{y} = \text{arg} \max_{i=1,...,k} \textbf{w}^T_i\textbf{x} + b_i$$
 
 - Same prediction rule as OvR !
 
@@ -690,8 +690,8 @@ class: some-space
 # In sckit-learn
 
 - OvO: only SVC
-- OvR: default for all linear models, even LogisticRegression (deprecated)
-- `LogisticRegression(multinomial=True)`
+- OvR: default for all linear models except for logistic regression
+- `LogisticRegression(multi_class='auto')`
 - `clf.decision_function` = $w^Tx + b$
 - `logreg.predict_proba`
 - `SVC(probability=True)` not great
@@ -1002,7 +1002,7 @@ $$k_\text{linear}(\mathbf{x}, \mathbf{x}') = \mathbf{x}^T\mathbf{x}'$$
 
 $$k_\text{poly}(\mathbf{x}, \mathbf{x}') = (\mathbf{x}^T\mathbf{x}' + c) ^ d$$
 
-$$k_\text{rbf}(\mathbf{x}, \mathbf{x}') = \exp(\gamma||\mathbf{x} -\mathbf{x}'||^2)$$
+$$k_\text{rbf}(\mathbf{x}, \mathbf{x}') = \exp(-\gamma||\mathbf{x} -\mathbf{x}'||^2)$$
 
 $$k_\text{sigmoid}(\mathbf{x}, \mathbf{x}') = \tanh\left(\gamma \mathbf{x}^T\mathbf{x}'  + r\right)$$
 
@@ -1181,7 +1181,7 @@ poly_svm.support_
 ```
 `$$ y = \text{sign}(-0.057 (\mathbf{x}_1^T\mathbf{x} + 1)^2
          -0.012 (\mathbf{x}_{41}^T \mathbf{x} + 1)^2 \\
-         +0.008 (\mathbf{x}_{42}^T \mathbf{x} + 1)^2 + 0.062 * (\mathbf{x}_{62}, \mathbf{x} + 1)^2)
+         +0.008 (\mathbf{x}_{42}^T \mathbf{x} + 1)^2 + 0.062 (\mathbf{x}_{62}, \mathbf{x} + 1)^2)
 $$`
 
 ???
@@ -1278,7 +1278,7 @@ give you terrible results.
 
 - Regularization parameter C is limit on alphas
 (for any kernel)
-- Gamma is bandwidth: $k_\text{rbf}(\mathbf{x}, \mathbf{x}') = \exp(\gamma||\mathbf{x} -\mathbf{x}'||^2)$
+- Gamma is bandwidth: $k_\text{rbf}(\mathbf{x}, \mathbf{x}') = \exp(-\gamma||\mathbf{x} -\mathbf{x}'||^2)$
 
 
 .center[
@@ -1347,19 +1347,22 @@ two important parameters to tune is C and gamma.
 
 .smaller[
 ```
-gamma : float, optional (default = "auto")
+gamma : {‘scale’, ‘auto’} or float, optional (default=’scale’)
   Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
   if gamma='scale' (default) is passed then it uses 1 / (n_features * X.var())
   as value of gamma
+  if ‘auto’, uses 1 / n_features.
 ```
 ```python
+print('auto', np.mean(cross_val_score(SVC(gamma='auto'), X_train, y_train, cv=10)))
+print('scale', np.mean(cross_val_score(SVC(gamma='scale'), X_train, y_train, cv=10)))
 scaled_svc = make_pipeline(StandardScaler(), SVC())
-print(np.mean(cross_val_score(SVC(), X_train, y_train, cv=10)))
-print(np.mean(cross_val_score(scaled_svc, X_train, y_train, cv=10)))
+print('pipe', np.mean(cross_val_score(scaled_svc, X_train, y_train, cv=10)))
 ```
 ```
-0.987
-0.977
+auto 0.563
+scale 0.987
+pipe 0.977
 ```
 ```python
 gamma = (1. / (X_train.shape[1] * X_train.var()))

@@ -24,14 +24,15 @@ class: center, middle
 Andreas C. Müller
 
 ???
+FIXME: saw 1d tree explanation somewhere that was really neat? regression?
 FIXME add pruning
 FIXME bullet points!
+FIXME oblique trees?
 animation searching for split in tree?
 categorical data split?
 predition animation tree?
 min impurity decrease missing
 extra tree: only one thereshold per feature?
-FIXME: saw 1d tree explanation somewhere that was really neat?
 FIXME: short? Not if I actually explain the bullet points.
 FIXME: bias variance plot replace by two kinds of error (approximation, generalization)
 FIXME: length actually good. so more of a note than fixme lol
@@ -486,16 +487,52 @@ I wouldn't really say trees are interpretable but small
 trees are interpretable. So that's also the reason why you
 might want to restrict the rows of the tree. So you can
 easily communicate and easily explained.
-
 ---
-class:spacious
-# Relation to Nearest Neighbors
-- Predict average of neighbors – either by k, by epsilon ball or by leaf.
-- Trees are much faster to predict.
-- Both can’t extrapolate
-???
-FIXME plots
+# Cost Complexity Pruning
+.padding-top[
+.larger[
+$$  R_\alpha(T) = R(T) + \alpha|T| $$
+]
+]
 
+$R(T)$ is total leaf impurity
+
+$|T|$ is number of leaf nodes
+
+$\alpha$ is free parameter.
+---
+
+.smaller[
+```python
+from sklearn.model_selection import GridSearchCV
+param_grid = {'ccp_alpha': np.linspace(0., 0.03, 20)}
+grid = GridSearchCV(DecisionTreeClassifier(random_state=0),
+                    param_grid=param_grid, cv=10)
+grid.fit(X_train, y_train)
+```
+]
+.center[
+![:scale 70%](images/grid_ccp_alpha.png)
+]
+---
+# More efficient pruning
+```python
+clf = DecisionTreeClassifier(random_state=0)
+path = clf.cost_complexity_pruning_path(X_train, y_train)
+ccp_alphas, impurities = path.ccp_alphas, path.impurities
+```
+![:scale 70%](images/pruning_alpha.png)
+---
+# Best post-pruned vs pre-pruned
+.left-column[
+## Cost-complexity pruning
+![:scale 70%](images/tree_pruned.png)
+
+]
+.right-column[
+## Max leaf nodes search
+![:scale 80%](images/max_leaf_nodes_8.png)
+]
 ---
 #Extrapolation
 .center[
@@ -583,6 +620,15 @@ learning is hard. And if you need to extrapolate, there's a
 chance you're not going to be able to do with any model. But
 in particular, for tree-based and nearest neighbor based
 models, you should keep in mind that they can't do that.
+
+---
+class:spacious
+# Relation to Nearest Neighbors
+- Predict average of neighbors – either by k, by epsilon ball or by leaf.
+- Trees are much faster to predict.
+- Both can’t extrapolate
+???
+FIXME plots
 
 ---
 

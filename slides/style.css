@@ -79,7 +79,8 @@ font-size: 16px;
     font-size: 30px;
     font-family: 'Garamond';
 }
-.larger, .larger .remark-code {
+.larger, .larger .remark-code,  .remark-slide-content .larger .MathJax,
+.remark-slide-content .larger p, .remark-slide-content .larger li{
     font-size: 40px;
 }
 .largest, .largest .remark-code {

@@ -25,15 +25,12 @@ Andreas C. Müller
 
 ???
 FIXME: saw 1d tree explanation somewhere that was really neat? regression?
-FIXME add pruning
+FIXME show that only rank is important
 FIXME bullet points!
 FIXME oblique trees?
 animation searching for split in tree?
-categorical data split?
 predition animation tree?
-min impurity decrease missing
 extra tree: only one thereshold per feature?
-FIXME: short? Not if I actually explain the bullet points.
 FIXME: bias variance plot replace by two kinds of error (approximation, generalization)
 FIXME: length actually good. so more of a note than fixme lol
 FIXME: test curve mislabeled warm start
@@ -41,10 +38,13 @@ FIXME explain "values" in figure in slide notes
 FIXME plots sometimes say values and sometimes samples, make sure it's consistent!
 FIXME some plots say entropy but actually use gini?! wtf, redo plots
 FIXME add graphviz back in as it's a bit higher quality?
-
+FIXME add example of subset splits with categorical features
+FIXME don't do warm starts and OOB and do better explanations of rest
 FIXME entropy calculation for tree, maybe do it once explicitly?
 FIXME Go over finding a single split in some toy data! 1d regression?
-
+FIXME order is a bit weight
+FIXME better example of CCP helping
+FIXME show averaging in forest on regression example?
 
 
 ---
@@ -515,13 +515,15 @@ grid.fit(X_train, y_train)
 ![:scale 70%](images/grid_ccp_alpha.png)
 ]
 ---
-# More efficient pruning
+# Efficient pruning
 ```python
 clf = DecisionTreeClassifier(random_state=0)
 path = clf.cost_complexity_pruning_path(X_train, y_train)
 ccp_alphas, impurities = path.ccp_alphas, path.impurities
 ```
-![:scale 70%](images/pruning_alpha.png)
+.center[
+![:scale 55%](images/pruning_alpha.png)
+]
 ---
 # Best post-pruned vs pre-pruned
 .left-column[
@@ -963,11 +965,11 @@ voting = VotingClassifier(
     voting='soft')
 voting.fit(X_train, y_train)
 lr, tree = voting.estimators_
-voting.score(X_test, y_test), lr.score(X_test, y_test), tree.score(X_test, y_test)
+tree.score(X_test, y_test), lr.score(X_test, y_test), voting.score(X_test, y_test)
 ```
 
 ```
-0.88 0.84 0.80
+0.80 0.84 0.88 
 ```
 ]
 

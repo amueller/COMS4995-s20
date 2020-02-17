@@ -24,6 +24,7 @@ class: center, middle
 Andreas C. Müller
 
 ???
+FIXME add pruning
 FIXME bullet points!
 animation searching for split in tree?
 categorical data split?
@@ -77,7 +78,7 @@ class: centre,middle
 
 # Idea: series of binary questions
 .center[
-![:scale 70%](images/tree_illustation.png)
+![:scale 70%](images/tree_illustration.png)
 ]
 ???
 Binary classification trees are binary trees, where each
@@ -262,7 +263,7 @@ X_train, X_test, y_train, y_test = train_test_split(cancer.data,cancer.target,
                                                     random_state=0)
 
 
-from sklearn.tree import DecisionTreeClassifier, export_graphviz
+from sklearn.tree import DecisionTreeClassifier
 tree = DecisionTreeClassifier(max_depth=2)
 tree.fit(X_train, y_train)
 
@@ -314,13 +315,13 @@ dataset. The tree gets purer and purer as you move down the
 tree.
 
 ---
-class:spacious
+class:some-space
 
 # Parameter Tuning
 
-- Pre-pruning and post-pruning (not in sklearn yet)
+- Pre-pruning vs post-pruning
 
-- Limit tree size (pick one, maybe two):
+- Pre-pruning: Limit tree size (pick one, maybe two):
 
   - max_depth
 
@@ -1366,8 +1367,6 @@ Whenever a particular feature was used in the tree, you look
 at the decrease in impurity, and you aggregate these and at
 the end, you normalize it sum to one.
 
-
----
     </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>

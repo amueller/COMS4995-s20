@@ -29,10 +29,8 @@ Finally, a technique called calibration that looks somewhat similar to
 ensembles but has the goal of obtaining good probability
 estimates from any classifier.
 
-FIXME: Binning
 FIXME catboost
 
-FIXME GBRT: better explain log-loss
 FIXME: add example of calibrated and
 inaccurate vs accurate but not calibrated! (always saying 50% is calibrated)
 FIXME: brier score decomposition
@@ -741,6 +739,22 @@ lgbm.score(X_test, y_test))
 
 ---
 # CatBoost
+`conda install -c conda-forge catboost`
+
+```python
+from catboost.sklearn import CatBoostClassifier
+catb = CatBoostClassifier()
+catb.fit(X_train, y_train)
+catb.score(X_test, y_test))
+```
+- optimized for categorical variables
+- uses one feature / threshold for all splits on a given level aka symmetric trees
+- Symmetric trees are "different" but can be much faster
+- supports missing value
+- GPU training
+- monotonicity constraints
+- uses bagged and smoothed version of target encoding for categorical variables
+- lots of tooling
 
 ---
 class:spacious

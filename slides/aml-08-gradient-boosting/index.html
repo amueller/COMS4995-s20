@@ -214,12 +214,14 @@ different choices for different loss functions.
 
 
 ---
-class: center, middle
-# Boosting (in General)
+# Boosting 
+.larger[
+$$f(x) = \sum_k g_k(x)$$
 
+ - Family of algorithms to create "strong" learner $f$ from "weak" learners $g_k$.
+ - AdaBoost, GentleBoost, LogitBoost, …
+]
 ???
- - “Meta-algorithm” to create strong learners from weak learners.
- - AdaBoost, GentleBoost, …
  - Trees or stumps work best
  - Gradient Boosting often the best of the bunch
  - Many specialized algorithms (ranking etc)
@@ -342,7 +344,7 @@ gradient descent:
 $$\hat{y}_{j+1} = \hat{y}_j - \gamma \frac{\partial L(y_i, \hat{y}_i)}{\partial\hat{y}}$$
 ]
 ---
-#GradientBoostingRegressor
+#GradientBoostingRegressor / HistGradientBoostingRegressor
 
 .center[
 ![:scale 50%](images/grad_boost_regression_steps.png)
@@ -430,13 +432,20 @@ will be a very large residual.
 # Gradient boosting for classification
 Logistic regression:
 
-`$$\min_{w \in ℝ^{p}, b \in \mathbb{R}}C \sum_{i=1}^n\log(\exp(-y_i(w^T \textbf{x}_i + b )) + 1)$$`
+`$$\min_{w \in ℝ^{p}, b \in \mathbb{R}}\sum_{i=1}^n\log(\exp(-y_i(w^T \textbf{x}_i + b )) + 1)$$`
 
 Gradient boosting:
-`$$\min_{y_i\in \mathbb{R}^n}C \sum_{i=1}^n\log(\exp(-y_i \hat{y}_i) + 1)$$`
+`$$\min_{y_i\in \mathbb{R}^n}\sum_{i=1}^n\log(\exp(-y_i \hat{y}_i) + 1)$$`
 
 ---
-#GradientBoostingClassifier
+# Multiclass Gradient Boosting
+Multinomial logistic regression:
+`$$p(y=c|x) = \frac{e^{\textbf{w}_c^T\textbf{x} + b_i}}{\sum_{j=1}^k e^{\textbf{w}_j^T\textbf{x} + b_j}}$$`
+Multi-class gradient boosting:
+`$$p(y=c|x) = \frac{e^{\hat{y}^{(c)}}}{\sum_{j=1}^k e^{\hat{y}^{(j)}}}$$`
+One regression tree per class (per gradient step).
+---
+#GradientBoostingClassifier / HistGradientBoostingClassifier
 
 .center[
 ![:scale 70%](images/grad_boost_depth2.png)
@@ -465,17 +474,136 @@ then, in the end, it would fit the data perfectly.
 
 For multi-class, the default thing to do is One Versus Rest.
 
+---
+
+# Early stopping
+
+- Adding trees can lead to overfitting
+- Stop adding trees when validation accuracy stops increasing
+
+two choices:
+
+- pick number of trees and tune learning rate
+
+- pick learning rate, use early stopping
+
+???
+As I said earlier, if you add more and more trees, the
+algorithms can overfit. So instead of searching for the
+learning rate, or searching for number of trees, you can
+also do early stopping. Because this is a sequential
+algorithm that gets better and better the more trees you
+add, you can just use a validation set and stop adding trees
+once you overfit. You can do that both with scikit-learn and
+XGBoost.
+
+Basically, the idea is that you pick a large number of
+estimators and you have a separate validation set and if the
+validation set accuracy doesn't improve or if it decreases
+for number of iterations, say five, then you just stop the
+learning. This way, you get results faster, because you
+don't keep learning but also you possibly get a better model
+because you know the overfitting.
+
+The only downside stopping learning is that you have fewer
+data to train your model because you need to the validation
+set for early stopping. You’ll still need a separate test
+set to see how well the model actually does. You can't use
+the same set for early stopping and for evaluation.
+---
+class:spacious
+# Tuning of Gradient Boosting
+- Typically strong pruning via max_depth
+- Tune max_features
+- Tune column subsampling, row subsampling
+- Regularization
+- Pick learning rate and do early stopping
+- Or Pick n_estimators, tune learning rate (if not early stopping)
+???
+There are several things you can tune about the gradient
+boosting. A common approach is to pick the number of
+estimators that you have time for. So runtime is obviously
+linear than number of estimators because you need to build
+each tree one by one. Each tree is built with the same
+parameters. And then you can tune the learning rate to see
+how strongly you want to fit the data.
+
+You can also tune something like max features if you want to
+add more randomness, but that's actually not very commonly
+used. You can also subsample the data if you want faster
+training. And typically there's a maximum depth.
+Traditionally, it was like maximum depth of one, two or
+three, though in kaggle people are doing like 8 to 10 or
+something. But typically, the depth is much, much smaller
+than for random forests. This means the model will be small
+in memory, and also will be faster to predict since you have
+less deep trees to traverse.
+
+Before we go into implementation I want to talk a little bit
+about analyzing the models. So again, because it’s a
+tree-based model, the prediction is a linear combination of
+trees, you can look at feature importance like the same way
+we did for random forest and trees.
 
 ---
 class: middle
-# Improvements: "extreme" gradient boosting
+# Improvements:
+# "extreme" gradient boosting
+
+[XGBoost: A Scalable Tree Boosting System, 2016](http://dmlc.cs.washington.edu/data/pdf/XGBoostArxiv.pdf)
 ---
-class: center
+class: center, middle
 # Speeding up tree-building via binning
 ---
 # Split finding is slow
+
+```python
+for feature in features:
+    for threshold in thresholds(f):
+        gain = compute_gain(feature, threshold)
+        if gain > best_gain:
+            best_split = (feature, threshold)
+```
+
+- Thresholds: all unique values of feature.
+- Scanning thresholds = sorting: O(n log n)
 ---
 # Binning features
+
+![:scale 100%](images/binning_quantiles.png)
+---
+# Binning features
+
+.left-column[
+## Original
+```
+[[5. , 2. , 3.5, 1. ],
+ [4.9, 3. , 1.4, 0.2],
+ [4.4, 2.9, 1.4, 0.2],
+ [5. , 2.3, 3.3, 1. ],
+ [4.9, 2.5, 4.5, 1.7],
+ [6.3, 2.5, 5. , 1.9],
+ [6.3, 2.3, 4.4, 1.3],
+ [5. , 3.5, 1.3, 0.3],
+ [6.1, 2.8, 4.7, 1.2],
+ [5. , 3.5, 1.6, 0.6]])
+ ```
+ ]
+ .right-column[
+## Binned
+```
+[[1, 0, 1, 1],
+ [0, 2, 0, 1],
+ [0, 1, 0, 1],
+ [1, 0, 1, 1],
+ [0, 0, 2, 3],
+ [3, 0, 3, 4],
+ [3, 0, 2, 2],
+ [1, 4, 0, 1],
+ [3, 1, 3, 2],
+ [1, 4, 1, 1]])
+```
+ ]
 ---
 # Binned split finding is fast
 .left-column[
@@ -499,6 +627,31 @@ class: spacious
 According to user feedback, using column sub-sampling prevents over-fitting even more so than the traditional row sub-sampling. (XGBoost: A Scalable Tree Boosting System, 2016)
 ]
 ---
+# HistGradientBoostingClassifier
+
+![:scale 100%](images/hist_gradient_boosting.png)
+---
+
+.left-column[
+
+## GradientBoostingClassifier
+
+- no binning
+- single core
+- sparse data support
+]
+
+.right-column[
+## HistGradientBoostingClassifier
+- binning
+- multicore
+- no sparse data support
+- missing value support
+- soon: monotonicity support
+- soonish: native categorical variables
+]
+
+---
 # XGBoost
 `conda install -c conda-forge xgboost`
 
@@ -510,7 +663,10 @@ xgb.score(X_test, y_test))
 ```
 
 - supports missing values
-- supports multi-core
+- GPU training
+- networked parallel training
+- monotonicity constraints
+- supports sparse data
 
 ???
 In terms of implementation, there's a couple of
@@ -566,73 +722,25 @@ And that will make your computation much faster.
 - Scikit-learn compatible interface
 
 ---
-# HistGradientBoostingClassifier
+# LightGBM
+`conda install -c conda-forge lightgbm`
 
-![:scale 100%](images/hist_gradient_boosting.png)
+```python
+from lightgbm.sklearn import LGBMClassifier
+lgbm = LGBMClassifier()
+lgbm.fit(X_train, y_train)
+lgbm.score(X_test, y_test))
+```
+
+- supports missing values
+- natively supports categorical variables
+- GPU training
+- networked parallel training
+- monotonicity constraints
+- supports sparse data
+
 ---
-# Early stopping
-
-- Adding trees can lead to overfitting
-- Stop adding trees when validation accuracy stops increasing
-- Optional in XGBoost and sklearn >= 0.20
-
-???
-As I said earlier, if you add more and more trees, the
-algorithms can overfit. So instead of searching for the
-learning rate, or searching for number of trees, you can
-also do early stopping. Because this is a sequential
-algorithm that gets better and better the more trees you
-add, you can just use a validation set and stop adding trees
-once you overfit. You can do that both with scikit-learn and
-XGBoost.
-
-Basically, the idea is that you pick a large number of
-estimators and you have a separate validation set and if the
-validation set accuracy doesn't improve or if it decreases
-for number of iterations, say five, then you just stop the
-learning. This way, you get results faster, because you
-don't keep learning but also you possibly get a better model
-because you know the overfitting.
-
-The only downside stopping learning is that you have fewer
-data to train your model because you need to the validation
-set for early stopping. You’ll still need a separate test
-set to see how well the model actually does. You can't use
-the same set for early stopping and for evaluation.
----
-class:spacious
-# More Tuning of Gradient Boosting
-- Typically strong pruning via max_depth
-- Tune max_features
-- Tune column subsampling, row subsampling
-- Regularization
-- Pick learning rate and do early stopping
-- Or Pick n_estimators, tune learning rate (if not early stopping)
-???
-There are several things you can tune about the gradient
-boosting. A common approach is to pick the number of
-estimators that you have time for. So runtime is obviously
-linear than number of estimators because you need to build
-each tree one by one. Each tree is built with the same
-parameters. And then you can tune the learning rate to see
-how strongly you want to fit the data.
-
-You can also tune something like max features if you want to
-add more randomness, but that's actually not very commonly
-used. You can also subsample the data if you want faster
-training. And typically there's a maximum depth.
-Traditionally, it was like maximum depth of one, two or
-three, though in kaggle people are doing like 8 to 10 or
-something. But typically, the depth is much, much smaller
-than for random forests. This means the model will be small
-in memory, and also will be faster to predict since you have
-less deep trees to traverse.
-
-Before we go into implementation I want to talk a little bit
-about analyzing the models. So again, because it’s a
-tree-based model, the prediction is a linear combination of
-trees, you can look at feature importance like the same way
-we did for random forest and trees.
+# CatBoost
 
 ---
 class:spacious

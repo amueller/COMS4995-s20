@@ -29,7 +29,11 @@ Finally, a technique called calibration that looks somewhat similar to
 ensembles but has the goal of obtaining good probability
 estimates from any classifier.
 
-FIXME catboost
+FIXME regularization parameter mentioned before introduced
+FIXME explain regularization better
+FIXME parameter tuning example
+FIXME symmetric trees
+FIXME actually write out gradients maybe
 
 FIXME: add example of calibrated and
 inaccurate vs accurate but not calibrated! (always saying 50% is calibrated)
@@ -342,7 +346,7 @@ gradient descent:
 $$\hat{y}_{j+1} = \hat{y}_j - \gamma \frac{\partial L(y_i, \hat{y}_i)}{\partial\hat{y}}$$
 ]
 ---
-#GradientBoostingRegressor / HistGradientBoostingRegressor
+#GradientBoostingRegressor 
 
 .center[
 ![:scale 50%](images/grad_boost_regression_steps.png)
@@ -739,14 +743,16 @@ lgbm.score(X_test, y_test))
 
 ---
 # CatBoost
+.smallest[
 `conda install -c conda-forge catboost`
-
 ```python
 from catboost.sklearn import CatBoostClassifier
 catb = CatBoostClassifier()
 catb.fit(X_train, y_train)
 catb.score(X_test, y_test))
 ```
+]
+.smaller[
 - optimized for categorical variables
 - uses one feature / threshold for all splits on a given level aka symmetric trees
 - Symmetric trees are "different" but can be much faster
@@ -755,7 +761,7 @@ catb.score(X_test, y_test))
 - monotonicity constraints
 - uses bagged and smoothed version of target encoding for categorical variables
 - lots of tooling
-
+]
 ---
 class:spacious
 # Gradient Boosting Advantages

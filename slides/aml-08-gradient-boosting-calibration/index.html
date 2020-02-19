@@ -30,7 +30,7 @@ ensembles but has the goal of obtaining good probability
 estimates from any classifier.
 
 FIXME: Binning
-FIXME: talk about gradient boosting as gradient descent more? - requires gradient descent :-/
+FIXME catboost
 
 FIXME GBRT: better explain log-loss
 FIXME: add example of calibrated and
@@ -115,15 +115,15 @@ at a time.
 .smaller[
 Logistic Regression Objective:
 
-`$$F(w) = -C \sum_{i=1}^n\log(\exp(-y_iw^T \textbf{x}_i) +1 ) + ||w||_2^2$$`
+`$$F(w, b) = -C \sum_{i=1}^n\log(\exp(-y_iw^T \textbf{x}_ii -b) +1 ) + ||w||_2^2$$`
 
 Gradient:
 
-`$$\frac{d}{dw}F(w) = \frac{d}{dw} -C \sum_{i=1}^n\log(\exp(-y_iw^T \textbf{x}_i) +1 ) + ||w||_2^2$$`
+`$$\frac{d}{dw}F(w) = \frac{d}{dw} -C \sum_{i=1}^n\log(\exp(-y_iw^T \textbf{x}_i - b) +1 ) + ||w||_2^2$$`
 
 Stochastic Gradient: Pick $x_i$ randomly, then
 
-`$$\frac{d}{dw}F(w) \approx \frac{d}{dw} -C \log(\exp(-y_iw^T \textbf{x}_i) +1 ) + \frac{1}{n}||w||_2^2$$`
+`$$\frac{d}{dw}F(w) \approx \frac{d}{dw} -C \log(\exp(-y_iw^T \textbf{x}_ii -b) +1 ) + \frac{1}{n}||w||_2^2$$`
 
 In practice: just iterate over i.
 ]
@@ -314,6 +314,34 @@ Learning rate $\gamma, i.e. 0.1$
 FIXME plot for regression models
 Come back to this
 ---
+class: compact
+# Gradient Boosting is Gradient Descent
+
+.left-column[
+## Linear regression
+$$ L(\mathbf{x}_i, y_i, \mathbf{w}, b) = \sum_i(y_i - \hat{y}_i)^2 $$
+$$ = \sum_i(y_i - w^T \mathbf{x}_i - b)^2 $$
+
+optimize:
+
+`$$\min_{w \in \mathbb{R}^p, b\in\mathbb{R}} \sum_{i=1}^n (y_i - w^T\mathbf{x}_i - b)^2$$`
+
+gradient descent:
+$$w_{j+1} = w_j - \gamma \frac{\partial L(\mathbf{x}_i, y_i, \mathbf{w}, b)}{\partial\mathbf{w}}$$
+]
+--
+.right-column[
+## Gradient Boosting
+$$ L(y_i, \hat{y}_i) = \sum_i(y_i - \hat{y}_i)^2 $$
+
+optimize:
+
+`$$\min_{\hat{y}\in \mathbb{R}^n} \sum_{i=1}^n (y_i - \hat{y_i})^2$$`
+
+gradient descent:
+$$\hat{y}_{j+1} = \hat{y}_j - \gamma \frac{\partial L(y_i, \hat{y}_i)}{\partial\hat{y}}$$
+]
+---
 #GradientBoostingRegressor
 
 .center[
@@ -398,7 +426,14 @@ is that I restricted my f1 to not completely fit the data.
 I'm not trying to completely overfit the data, I'm trying to
 use a simple model. So if I use a tree of depth one, there
 will be a very large residual.
+---
+# Gradient boosting for classification
+Logistic regression:
 
+`$$\min_{w \in ℝ^{p}, b \in \mathbb{R}}C \sum_{i=1}^n\log(\exp(-y_i(w^T \textbf{x}_i + b )) + 1)$$`
+
+Gradient boosting:
+`$$\min_{y_i\in \mathbb{R}^n}C \sum_{i=1}^n\log(\exp(-y_i \hat{y}_i) + 1)$$`
 
 ---
 #GradientBoostingClassifier
@@ -432,78 +467,17 @@ For multi-class, the default thing to do is One Versus Rest.
 
 
 ---
-class:spacious
-# Gradient Boosting Advantages
-
-- Very fast using XGBoost, LightGBM, pygbm, new scikit-learn implementation HistGradientBoosting
-- Small model size
-- Typically more accurate than Random Forests
-???
-It's sort of slower to train if you're training serial, but
-if you paralyze it, it's often faster to train since it has
-a much smaller model size. So the trees are usually not as
-deep and you don't need as many because you're doing much
-more focused learning where you try to correct the mistakes
-of the other models. So usually it’s very fast to predict
-because prediction can happen in parallel over all the
-trees, while learning cannot happen in parallel over all the
-trees necessarily. Usually, this is more accurate than
-random forests.
-
-The question is for the same number of estimators, how does
-low versus high learning rate changes?
-
-High learning rate allows you to fit the data more strongly
-and also overfit the data more strongly.
-
-
----
-
-class:spacious
-# Tuning Gradient Boosting
-- Pick n_estimators, tune learning rate
-- Can also tune max_features
-- Typically strong pruning via max_depth
-
-???
-There are several things you can tune about the gradient
-boosting. A common approach is to pick the number of
-estimators that you have time for. So runtime is obviously
-linear than number of estimators because you need to build
-each tree one by one. Each tree is built with the same
-parameters. And then you can tune the learning rate to see
-how strongly you want to fit the data.
-
-You can also tune something like max features if you want to
-add more randomness, but that's actually not very commonly
-used. You can also subsample the data if you want faster
-training. And typically there's a maximum depth.
-Traditionally, it was like maximum depth of one, two or
-three, though in kaggle people are doing like 8 to 10 or
-something. But typically, the depth is much, much smaller
-than for random forests. This means the model will be small
-in memory, and also will be faster to predict since you have
-less deep trees to traverse.
-
-Before we go into implementation I want to talk a little bit
-about analyzing the models. So again, because it’s a
-tree-based model, the prediction is a linear combination of
-trees, you can look at feature importance like the same way
-we did for random forest and trees.
-
----
 class: middle
-# Improvements: Binning and "extreme" gradient boosting
+# Improvements: "extreme" gradient boosting
 ---
-class: spacious
-
-# A better split criterion (?)
-- Optimize "weights" in leave (not just counting)
-- Include second order (hessian) and regularizer
-![:scale 100%](images/xgboost-criterion.png)
-
+class: center
+# Speeding up tree-building via binning
 ---
-# Binning
+# Split finding is slow
+---
+# Binning features
+---
+# Binned split finding is fast
 .left-column[
 ![:scale 100%](images/xgboost-exact.png)
 ]
@@ -511,6 +485,13 @@ class: spacious
 .right-column[
 ![:scale 100%](images/xgboost-binning.png)
 ]
+---
+class: spacious
+
+# A better split criterion
+- Include second order (hessian) and regularizer
+![:scale 100%](images/xgboost-criterion.png)
+
 ---
 
 # Aggressive sub-sampling
@@ -589,42 +570,6 @@ And that will make your computation much faster.
 
 ![:scale 100%](images/hist_gradient_boosting.png)
 ---
-class: spacious
-.center[
-![:scale 50%](images/xgboost_sklearn_bench.png)
-]
-- Exact splits ~5x faster on single core
-- Appoximate splits, multi-core -> more speed!
-- Also check lightGBM
-- Both have GPU support
-- https://github.com/szilard/GBM-perf
-- Nicolas' PR for sklearn [#12807](https://github.com/scikit-learn/scikit-learn/pull/12807)
-???
-Here is actually for the exact version of XGBoost the
-comparison in terms of time and accuracy. This is for
-illustrative purposes. I ran this on amnest or subsets of
-amnest. The x-axis is the number of samples and so you can
-see how the runtime increases as the number of samples
-increases.
-
-For a significant number of samples, you can see that
-XGBoost is much faster.
-
-If you run on a single core XGBoost tends to be about five
-times faster, if you run it on a 10 core machine, it's going
-to be much, much faster.
-
-There's also an implementation out of Microsoft called
-lightGBM, which might be even faster. So according to a lot
-of latest benchmarks that I saw, lightGBM is actually
-fastest. LightGBM and XGBoost both have GPU support, which
-makes them even faster. For GPU support, the benchmark that
-I saw stated XGBoost was a bit faster while on CPU lightGBM
-was a bit faster. But both are pretty fast and highly
-paralleled optimized algorithms. So if you care about
-speeds, you want to use one of these two.
-
----
 # Early stopping
 
 - Adding trees can lead to overfitting
@@ -657,11 +602,67 @@ the same set for early stopping and for evaluation.
 ---
 class:spacious
 # More Tuning of Gradient Boosting
+- Typically strong pruning via max_depth
 - Tune max_features
 - Tune column subsampling, row subsampling
-- Typically strong pruning via max_depth
 - Regularization
-- Pick learning rate and do early stopping?
+- Pick learning rate and do early stopping
+- Or Pick n_estimators, tune learning rate (if not early stopping)
+???
+There are several things you can tune about the gradient
+boosting. A common approach is to pick the number of
+estimators that you have time for. So runtime is obviously
+linear than number of estimators because you need to build
+each tree one by one. Each tree is built with the same
+parameters. And then you can tune the learning rate to see
+how strongly you want to fit the data.
+
+You can also tune something like max features if you want to
+add more randomness, but that's actually not very commonly
+used. You can also subsample the data if you want faster
+training. And typically there's a maximum depth.
+Traditionally, it was like maximum depth of one, two or
+three, though in kaggle people are doing like 8 to 10 or
+something. But typically, the depth is much, much smaller
+than for random forests. This means the model will be small
+in memory, and also will be faster to predict since you have
+less deep trees to traverse.
+
+Before we go into implementation I want to talk a little bit
+about analyzing the models. So again, because it’s a
+tree-based model, the prediction is a linear combination of
+trees, you can look at feature importance like the same way
+we did for random forest and trees.
+
+---
+class:spacious
+# Gradient Boosting Advantages
+
+- Very fast using HistGradientBoosting (or XGBoost, LightGBM)
+- Small model size
+- Typically more accurate than Random Forests
+
+
+- "old" GradientBoosting in sklearn is comparatively slow
+???
+It's sort of slower to train if you're training serial, but
+if you paralyze it, it's often faster to train since it has
+a much smaller model size. So the trees are usually not as
+deep and you don't need as many because you're doing much
+more focused learning where you try to correct the mistakes
+of the other models. So usually it’s very fast to predict
+because prediction can happen in parallel over all the
+trees, while learning cannot happen in parallel over all the
+trees necessarily. Usually, this is more accurate than
+random forests.
+
+The question is for the same number of estimators, how does
+low versus high learning rate changes?
+
+High learning rate allows you to fit the data more strongly
+and also overfit the data more strongly.
+
+
 ---
 class: middle
 # Concluding tree-based models
@@ -712,486 +713,6 @@ tree-based models are probably a good bet.
 Next thing we'll talk about is a different way to build
 ensembles, different way to put together multiple models.
 
-
----
-
-class:spacious
-#Calibration
-.center[
-<a href="http://www.datascienceassn.org/sites/default/files/
-Predicting%20good%20probabilities%20with%20supervised%20learning.pdf">Source</a>
-]
-- Probabilities can be much more informative than labels:
-
-- “The model predicted you don’t have cancer” vs “The model predicted you’re 40% likely to have cancer”
-
-???
-So the next thing I want to talk about is calibrations.
-Calibration also builds a model on top of a model. But the
-goal of calibration is to actually get accurate probability
-estimates. Oftentimes, we’re interested not only in the
-output of the classifier, but also interested in the
-uncertainty estimate of a classifier.
-
-So for example, think about a model that does cancer
-prediction. If the model predicted you don't have cancer,
-you're going to be pretty happy. If it says there’s a 40%
-chance that you have cancer, which is the same thing if you
-have a binary classification, you might be less happy since
-40% seems pretty high for having cancer anyway.
-
-So often, we want actual probability estimates that allow us
-to make decisions that are finer grained than just a yes or
-no.
-
-Calibration is a way to get probability estimates out of any
-models. For example, SVMs are not good at breaking
-probabilities, so you can use calibration if you really want
-to use an SVM and get the probabilities out. Or if you have
-a model that already was able to predict probabilities like
-tree or random forests or nearest neighbors, you can use
-calibration to make sure that the probabilities that you get
-are actually good probabilities. So if you use random forest
-and use it to estimate probabilities, if it says “this is
-70% class one”, it's not really clear what it means because
-the model is not really trained to optimize probability
-estimates so the probability estimates could be off quite a
-bit.
-
----
-class: spacious
-#Calibration curve (Reliability diagram)
-.left-column[
-![:scale 100%](images/prob_table.png)
-]
-.right-column[
-![:scale 100%](images/calib_curve.png)
-
-]
-
-???
-Before we talk about how to do calibration, I want to talk
-about how to measure calibration and binary classification.
-You can also do it for multiclass classification, but binary
-is much simpler. The cool thing about it is you can actually
-measure calibration and you can calibrate the classifier
-without having round first the probability estimates. So
-even if you only have like 0 or 1 labels you can still make
-sure that you have a model that provides reasonable
-probabilities.
-
-The way you do this if you take the probability estimates of
-the model, you bin the probability... So here, for example,
-let's say these are probabilities estimate by a model, these
-are my true targets. So now I sort and bin them by the
-probability estimates.
-
-And then I create three bins. And then I look at what is the
-actual prevalence of the classes in each of these bins.
-
-If these probabilities estimates were actually accurate,
-then let's say if I have a bin for all the 90% ones, the
-prevalence in the 90% bin should actually be 90%, that's
-sort of what it says. 90% of the points that are given a
-score of 90% should be the true class. And so you can plot
-this in the calibration curve or the reliability diagram.
-
-So here I have three bins. And basically what I wanted is
-the diagonal line where the bin that contains the very small
-probabilities has the same prevalence. And so here, for
-example, things that are around like 0.5 actually have zero
-prevalence. So there's no true class in there, which is
-really weird. You won’t use a diagonal line, this would be a
-very bad classifier.
-
-One thing that I want to emphasize here is that calibration
-doesn't imply that the model is accurate. These are actually
-two different things. If I have a binary model on a balanced
-data set, and it always says 50% probability for all data
-points. It's perfectly calibrated because it says 50% for
-all data points. 50% of those data points are actually the
-true class if the dataset is balanced. So it's a completely
-trivial classifier that doesn't tell you anything but
-perfectly calibrated, but also kind of tells you nothing
-because it always gives you 0.5. So you know that you can
-trust it basically.
-
-Calibration basically tells you how much you can trust the
-model.
-
-
-- For binary classification only
-- you can be calibrated and inaccurate!
-- Given a predicted ranking or probability from a supervised classifier, bin predictions.
-- Plot fraction of data that’s positive in each bin.
-- Doesn’t require ground truth probabilities!
-
----
-class: split-40
-# calibration_curve with sklearn
-
-Using subsample of covertype dataset
-.left-column[
-.tiny-code[
-```python
-from sklearn.linear_model import LogisticRegressionCV
-print(X_train.shape)
-print(np.bincount(y_train))
-lr = LogisticRegressionCV().fit(X_train, y_train)
-(52292, 54)
-[19036 33256]```
-
-
-```python
-lr.C_
-array([ 2.783])
-```
-
-```python
-print(lr.predict_proba(X_test)[:10])
-print(y_test[:10])
-[[ 0.681  0.319]
- [ 0.049  0.951]
- [ 0.706  0.294]
- [ 0.537  0.463]
- [ 0.819  0.181]
- [ 0.     1.   ]
- [ 0.794  0.206]
- [ 0.676  0.324]
- [ 0.727  0.273]
- [ 0.597  0.403]]
-[0 1 0 1 1 1 0 0 0 1]
-```
-
-]
-]
-
-.right-column[
-.tiny-code[
-```python
-from sklearn.calibration import calibration_curve
-probs = lr.predict_proba(X_test)[:, 1]
-prob_true, prob_pred = calibration_curve(y_test, probs, n_bins=5)
-print(prob_true)
-print(prob_pred)
-[ 0.2    0.303  0.458  0.709  0.934]
-[ 0.138  0.306  0.498  0.701  0.926]
-```
-]
-.center[![:scale 70%](images/predprob_positive.png)
-]
-]
-
-???
-I'm using a subsample of cover type dataset because it's
-kind of big and we get some nice histograms here. So I train
-a logistic regression model. Logistic regression typically
-gives pretty good probability estimates. So I expect this
-model to be relatively well calibrated.
-
-For the first 10 data points, the probabilities and the
-actual predictions. So what I'm going to take is the
-predicted probabilities for all data points, for the first
-class and the actual predictions.
-
-Obviously, I need to do this on the test set. If I do this
-on the training set, then it'll tell me nothing, because on
-the training set the model is good. So either I need to do
-this on a test set or on some of the holdout set. On the
-training set, if I perfectly overfit, I would be doing
-perfect, but that's not the point. So here, I need to use a
-separate set and so I can compute the calibration curve.
-
-You can see the histogram here shows how many points are in
-this area. And here, the orange thing is the actual
-calibration curve, the dotted line is sort of perfect
-calibration. And in here, I’m using five bins. The first bin
-is zero until 0.2, so I would expect that 10% of the data in
-this bin 10 is the true class, but actually, it's more like
-20%. So here, it's like not perfectly calibrated.
-
-In the second bin from 0.2 to 0.4. So what I would expect is
-that 30% of these data points are predicted as class one and
-actually- it's 30%.
-
----
-class:spacious
-#Influence of number of bins
-
-.center[![:scale 100%](images/influence_bins.png)]
-
-???
-How do I pick the number of bins?
-
-More bins give me more resolution. But also at some point,
-you get noise. So I guess it's the same way you would do for
-histogram. You can use the standard heuristic for histogram
-but usually, if you do something like 10 or 20, that's
-usually enough bins.
-
-
-- Works here because dataset is big
-- Might become very noisy for larger datasets
----
-class:spacious
-# Comparing Models
-
-.center[![:scale 90%](images/calib_curve_models.png)]
-???
-Logistic regression is pretty well calibrated. The decision
-tree, since I didn't use any pruning, it'll be way too
-certain. So all probabilities estimates, even on a test set
-that will be either 0 or 1. So that's not very great. Random
-forest classifier used here is not certain enough.
-
-Now we want to fix that. Before I want to say how we can
-trust them let's measure them first.
-
-
----
-# Brier Score (for binary classification)
-
-- “mean squared error of probability estimate”
-`$$ BS = \frac{\sum_{i=1}^{n} (\widehat{p} (y_i)-y_i)^{2}}{n}$$`
-
-.center[![:scale 70%](images/models_bscore.png)]
-???
-This graph is a nice way to look at how calibrated something
-is. But it's very hard to compare. A standard way to compare
-calibration is a Brier score, you could also use something
-like a log loss. Log loss would also tell you how good that
-a probability estimate is.
-
-Brier score is the mean squared error of probability
-estimates.  Yi is either one or zero, basically, and p ̂ is
-the probability estimate.
-
-So if you predict 0.5 then it's always going to give you a
-loss, but it's going to give you a loss of only 0.5. If you
-predict 0 when you should’ve predicted 1 then it's going to
-give you a very large loss.
-
-Here are the brier loss for the different models. Also, the
-smaller is better. But this conflates accuracy and
-calibration a little bit because here, you can see that the
-random forest actually does best-.
-
-I guess it does better because just it's a more accurate
-model. So it's not well calibrated. But it is actually a
-much better predictor and so it still has a smaller score.
-
-We defined it, we can measure it and we actually want to
-calibrate it.
-
----
-# Fixing it: Calibrating a classifier
-- Build another model, mapping classifier probabilities to better probabilities!
-- 1d model! (or more for multi-class)
-
-`$$ f_{callib}(s(x)) \approx p(y)$$`
-
-
-
-- s(x) is score given by model, usually
-- Can also work with models that don’t even provide probabilities!
-Need model for $f_{callib}$, need to decide what data to train it on.
-- Can train on training set → Overfit
-- Can train using cross-validation → use data, slower
-
-???
-The way to do fix this is similar to stacking and that we
-built another model on top of the probability estimates. So
-usually, that's just a 1D model because we only have 1
-underlying model.
-
-If you have binary classification it gives us a single
-probability output and so we need to learn 1D function that
-basically maps this probability to something that is more
-accurate.
-
-It also works if the model gives us a score rather than a
-probability. SVM only gives us a score, we can still learn
-one leave function that tries to get probabilities.
-
-Similar to what we did was stacking. So you don't want to
-learn this the calibration model on the training data set
-because on train dataset you're doing very well. So you need
-to use either a whole dataset or you need to use
-cross-validation again.
-
----
-
-# Platt Scaling
-
-- Use a logistic sigmoid for $f_{callib}$
-- Basically learning a 1d logistic regression
-- (+ some tricks)
-- Works well for SVMs
-
-`$$f_{platt} = \frac{1}{1 + exp(-ws(x) - b)}$$`
-
-
-???
-There are two main methods that people use and both are in
-scikit-learn. One is Platt scaling, Platt scaling is
-basically the same as 1D logistic regression. So you learn
-to 1d just sigmoid plus, there's like some new tricks.
-
-This basically allows you to fix a particular sigmoid shape
-that you usually get from SVM scores and this works well for
-SVMs. But you only have one parameter here, so there's not a
-lot that you can tune.
-
-
----
-# Isotonic Regression
-
-- Very flexible way to specify $f_{callib}$
-- Learns arbitrary monotonically increasing step-functions in 1d.
-- Groups data into constant parts, steps in between.
-- Optimum monotone function on training data (wrt mse).
-.center[![:scale 40%](images/isotonic_regression.png)]
-
-???
-
-The other one is Isotonic regression, which is basically a
-non-parametric mapping. What it does is it fits the monotone
-function that minimizes the squared error.
-
-The problem it’s solving is the peace wise constant function
-that’s monotonous with minimums error. So this what it looks
-like and so if you have to data in red, then standard
-regression will find this green thing.
-
-In Platt scaling, s(x) is what the model scores, the score
-that comes from the SVM or random forest. The w is the one
-parameter you learn from the data. This is a very inflexible
-model that allows you to say how steep should the sigmoid
-correction be while Isotonic regression is a very flexible
-model that allows you to correct anything in any way, it’s
-monotonous.
-
-
----
-class:spacious
-# Building the model
-- Using the training set is bad
-- Either use hold-out set or cross-validation
-- Cross-validation can be used to make unbiased probability predictions, use that as training set.
-
-???
----
-class: center
-# Fitting the calibration model
-![:scale 70%](images/calibration_val_scores.png)
----
-class: center
-
-# Fitting the calibration model
-![:scale 70%](images/calibration_val_scores_fitted.png)
-
----
-# CalibratedClassifierCV
-.tiny-code[
-```python
-from sklearn.calibration import CalibratedClassifierCV
-X_train_sub, X_val, y_train_sub, y_val = train_test_split(X_train, y_train,
-                                                          stratify=y_train, random_state=0)
-rf = RandomForestClassifier().fit(X_train_sub, y_train_sub)
-scores = rf.predict_proba(X_test)[:, 1]
-plot_calibration_curve(y_test, scores, n_bins=20)
-```
-.center[![:scale 30%](images/random_forest.png)]
-]
-???
----
-# Calibration on Random Forest
-.smaller[
-```python
-cal_rf = CalibratedClassifierCV(rf, cv="prefit", method='sigmoid')
-cal_rf.fit(X_val, y_val)
-scores_sigm = cal_rf.predict_proba(X_test)[:, 1]
-
-cal_rf_iso = CalibratedClassifierCV(rf, cv="prefit", method='isotonic')
-cal_rf_iso.fit(X_val, y_val)
-scores_iso = cal_rf_iso.predict_proba(X_test)[:, 1]
-```]
-
-.center[![:scale 90%](images/types_callib.png)]
-
-???
-This is for a random forest again. It can use calibrated
-classifier CV. This does calibration. You can either you do
-it with single hold-out dataset or with cross-validation.
-
-Here, I'm using a single holdout set. I split my dataset,
-the training set into X_train_sub and X_val.
-
-X_train_sub is what I used to train a random forest and then
-x_val is what I'm going to use to calibrate it. I created
-calibrated classifier CV with the random forest that I’ve
-already fit on the training dataset. I set cross-validation
-to prefit and set the method to sigmoid. And then I can fit
-this calibration model on the validation set.
-
-So here is what this looks like, the random forest model
-with no calibration, with sigma calibration and with
-isotonic calibration.
-
-In this case, sigmoid and isotonic don't look very
-different. They both look like reasonably calibrated.
-
-That said if you're doing sort of holdout set, destroying
-away a bunch of data for training your first model.
-
-
----
-
-# Cross-validated Calibration
-
-```python
-cal_rf_iso_cv = CalibratedClassifierCV(rf, method='isotonic')
-cal_rf_iso_cv.fit(X_train, y_train)
-scores_iso_cv = cal_rf_iso_cv.predict_proba(X_test)[:, 1]
-```
-
-.center[![:scale 90%](images/types_callib_cv.png)]
-
-???
-So we can also not specify CV, then it uses
-cross-validation, I think 3 fold by default.
-
-And so then it does the whole cross-validation thing
-internally. And then I get an even better calibration. So
-what it does here for each cross-validation it trains a
-separate model. And then if I want to predict on the test
-set, it uses all of these models and then averages them. So
-in a sense, it's not very surprising that I get a better
-result here because I built 3 random forest models on
-subsets of the data and then average them. I calibrated them
-and I averaged calibrated models. So I basically just build
-a bigger random forest, so it's not very surprising that it
-does better. Also, we were able to use more data.
-
-So if you do this, you retain as many models as there are
-cross-validation folds and you use all of them in
-prediction.
-
-- kinda cheating, we have more trees now lol
-- we use all the data, get good probabilities. just time-consuming
----
-# Multi-Class Calibration
-
-.center[![:scale 100%](images/multi_class_calibration.png)]
-
-???
-You can also do this for multi-class calibration, which does
-basically the same thing, but you just do it for each class
-individually and then you normalize again and you can make
-pretty pictures.
-
-- per-class calibratoin
-- renormalization
 ---
 class: center, middle
 

@@ -17,7 +17,7 @@ class: center, middle
 
 ### W4995 Applied Machine Learning
 
-# (Gradient) Boosting, Calibration
+# (Stochastic) Gradient Descent, Gradient Boosting
 
 02/19/20
 
@@ -47,25 +47,171 @@ probabilities on x axis? calibration curve: blue histogram
 is number of total points, y axis not labeled
 
 ---
-class: centre,middle
-# Gradient Boosting
-???
-Gradient boosting is one of the most successfull supervised
-machine learning methods in practice. It's often used in
-kaggle to win competition, it's used for credit scoring,
-it's one of the standard tools of the trade. It's one of the
-best of-the-shelf models A standard implementation that
-people use is XGBoost, but there's also an implementation in
-scikit-learn, and we'll talk about both of them.
+# Reminder: Gradient Descent
 
-Last time we talked about Random forests, which builds many
-trees independently, each randomized in a different way, and
-then averages their predictions. Gradient boosting on the
-other hand builds trees one by one in a sequential manner,
-with each tree requiring the results of previous trees.
-Often, Gradient boosting is done with very small trees, or
-even decision stumps, which is trees of depth one, so a
-single split.
+.right-column[![:scale 100%](images/gradient_3d.png)]
+
+Want: $$\arg \min_w F(w)$$
+
+Initialize $w_0$
+
+$$w^{(i+1)} \leftarrow w^{(i)} - \eta_i\frac{d}{dw}F(w^{(i)})$$
+
+Converges to local minimum
+
+???
+First, let's talk about Gradient Descent. So we have some
+function we want to minimize here the function is Lasso
+training data set plus the regularizer. F is the objective
+of the model and I want to find the best parameter setting
+w. The way gradient descent works are that we initialize it
+with some W and then we compute a gradient then we walk down
+the gradient by a small step. This converges to a local
+minimum in the function. For linear models, there's only one
+global minimum. Basically, any optimization algorithm you
+can think of will always converge to the same solution, they
+only converge at different speeds.
+
+---
+
+# Reminder: Gradient Descent
+
+.center[
+![:scale 40%](images/gradient_2d.png)
+]
+
+$$w^{(i+1)} \leftarrow w^{(i)} - \eta_i\frac{d}{dw}F(w^{(i)})$$
+
+
+???
+
+
+---
+
+# Pick a learning rate
+
+.center[
+![:scale 90%](images/gradient_learning_rates.png)
+]
+
+$$w^{(i+1)} \leftarrow w^{(i)} - \eta_i\frac{d}{dw}F(w^{(i)})$$
+
+???
+A little bit of an issue here is picking a learning rate
+which is how big a step are you making. If you make too
+small a step, then you're going to get stuck wherever you're
+started. If you pick the right step size, you can make very
+quick progress. If you pick too a big step size, you're
+going to be missing the target and just jumping around the
+target. This is a very simple optimizer. But it's not great
+and it’s not very fast because you need to compute gradients
+over the whole dataset. What you can do instead is you can
+approximate a gradient by looking only a single data point
+at a time. 
+
+---
+
+# (Stochastic) Gradient Descent
+.smaller[
+Logistic Regression Objective:
+
+`$$F(w) = -C \sum_{i=1}^n\log(\exp(-y_iw^T \textbf{x}_i) +1 ) + ||w||_2^2$$`
+
+Gradient:
+
+`$$\frac{d}{dw}F(w) = \frac{d}{dw} -C \sum_{i=1}^n\log(\exp(-y_iw^T \textbf{x}_i) +1 ) + ||w||_2^2$$`
+
+Stochastic Gradient: Pick $x_i$ randomly, then
+
+`$$\frac{d}{dw}F(w) \approx \frac{d}{dw} -C \log(\exp(-y_iw^T \textbf{x}_i) +1 ) + \frac{1}{n}||w||_2^2$$`
+
+In practice: just iterate over i.
+]
+
+???
+Looking at the Logistic Regression, the functional Logistic
+Regression we want to minimize is the log loss plus the
+regularizer. Instead of looking at the gradient for the
+whole sum here, we can get a stochastic approximation of the
+gradient by looking at only one of the sums at a time. In
+practice, we iterate over the dataset and go one by one
+through all the data points. We make sure we shuffle them
+before. Then we do small gradient steps. This is a very bad
+optimizer compared to the SAG but it can go very quickly
+over a lot of data. 
+
+---
+class: spacious
+# SGDClassifier, SGDRegressor and partial_fit
+```python
+# Run until convergence
+sgd = SGDClassifier().fit(X_train, y_train)
+
+# Run one iteration over a batched dataset
+sgd = SGDClassifier()
+for X_batch, y_batch in batches:
+    sgd.partial_fit(X_batch, y_batch, classes=[0, 1, 2])
+
+# Run several iterations over a batched datasets
+for i in range(10):
+    for X_batch, y_batch in batches:
+        sgd.partial_fit(X_batch, y_batch, classes=[0, 1, 2])
+```
+
+
+???
+Fit works just like everywhere else. Partial fit you can
+call it with different batches of data and this will keep
+fitting the model. One thing that you should keep in mind
+for the classifier is that you need to give it the classes
+at the beginning because it doesn't know how many classes
+there are and at the first time, not all the classes might
+be present in the data you give it to. So you need to
+specify how many classes there are. Partial fit doesn't do
+loops over a dataset. So if you want to use a partial fit,
+and you want to loop over dataset multiple times, you have
+to set the loop yourself. If you loop over a dataset, if you
+do more of gradient descent, then you get better results.
+This code is the same code for all combinations of losses
+and regularizers because it’s very simple to write this
+down.
+---
+class: spacious
+
+# SGD and partial_fit
+
+- SGDClassifier(), SGDRegressor() fast on very large datasets
+- Tuning learning rate and schedule can be tricky.
+- partial_fit allows working with out-of-memory data!
+
+
+???
+This is implemented in SGD classifier, and SGD regressor and
+you can use it in very large data sets. It's a little bit
+tricky to tune the learning rate and so you can either pick
+as constant learning rate, or you can pick an exponentially
+decreasing learning rate. There's one that's called optimal.
+If you scale your data to standard division 1, then the
+optimal one will often work well but it's not actually
+optimal on any sense. This will allow you to give you
+something quickly on a big data set. There's also another
+thing you can do, there's a method called partial_fit that
+these models have which allows you to iteratively fit feed
+it data. If you have like streaming data coming in and you
+having infinite data, you can just keep giving it more and
+more data called partial_fit. This method will update the
+model. In scikit-learn, if you call fit multiple times it
+will always forget whatever it saw before. Each fit resets
+the model while partial fit will remember what it saw before
+and keeps fitting the model. SGDClassifier() and
+SGDRegressor both have a whole bunch of different loss
+function penalties so they both can do elastic net penalty
+and the classifier can do logistic loss and hinge loss and
+squared hinge loss and the regressor can do Huber loss and
+squared error and absolute error. So there are many, many
+different choices for different loss functions. 
+
+
 
 ---
 class: center, middle
@@ -86,6 +232,27 @@ residuals, and it's been found to work very well in
 practice, in particular if you're using shallow trees as the
 weak learners. In principle, you could use any model as a
 weak learner, but trees just work really well.
+---
+class: centre,middle
+# Gradient Boosting
+???
+Gradient boosting is one of the most successfull supervised
+machine learning methods in practice. It's often used in
+kaggle to win competition, it's used for credit scoring,
+it's one of the standard tools of the trade. It's one of the
+best of-the-shelf models A standard implementation that
+people use is XGBoost, but there's also an implementation in
+scikit-learn, and we'll talk about both of them.
+
+Last time we talked about Random forests, which builds many
+trees independently, each randomized in a different way, and
+then averages their predictions. Gradient boosting on the
+other hand builds trees one by one in a sequential manner,
+with each tree requiring the results of previous trees.
+Often, Gradient boosting is done with very small trees, or
+even decision stumps, which is trees of depth one, so a
+single split.
+
 
 ---
 
@@ -268,8 +435,7 @@ For multi-class, the default thing to do is One Versus Rest.
 class:spacious
 # Gradient Boosting Advantages
 
-- Slower to train than RF (if using "old" GradientBoostingRegressor), but much faster to predict
-- Very fast using XGBoost, LightGBM, pygbm, new scikit-learn implementation [#12807](https://github.com/scikit-learn/scikit-learn/pull/12807)
+- Very fast using XGBoost, LightGBM, pygbm, new scikit-learn implementation HistGradientBoosting
 - Small model size
 - Typically more accurate than Random Forests
 ???
@@ -418,6 +584,10 @@ And that will make your computation much faster.
 - Fast approximate split finding
 - Scikit-learn compatible interface
 
+---
+# HistGradientBoostingClassifier
+
+![:scale 100%](images/hist_gradient_boosting.png)
 ---
 class: spacious
 .center[

@@ -131,16 +131,39 @@ https://en.wikipedia.org/wiki/Precision_and_recall
 class:split-40
 .left-column[
 ![:scale 50%](images/confusion_matrix_col.png)]
+.smallest[
 .right-column[
-<br />
-![:scale 100%](images/classification_report_1.png)
-<br />
-<br />
-![:scale 100%](images/classification_report_2.png)
-<br />
-<br />
-![:scale 100%](images/classification_report_3.png)
-]
+```
+              precision    recall  f1-score   support
+
+           0       0.90      1.00      0.95        90
+           1       0.00      0.00      0.00        10
+
+    accuracy                           0.90       100
+   macro avg       0.45      0.50      0.47       100
+weighted avg       0.81      0.90      0.85       100
+
+
+              precision    recall  f1-score   support
+
+           0       1.00      0.89      0.94        90
+           1       0.50      1.00      0.67        10
+
+    accuracy                           0.90       100
+   macro avg       0.75      0.94      0.80       100
+weighted avg       0.95      0.90      0.91       100
+
+
+              precision    recall  f1-score   support
+
+           0       0.94      0.94      0.94        90
+           1       0.50      0.50      0.50        10
+
+    accuracy                           0.90       100
+   macro avg       0.72      0.72      0.72       100
+weighted avg       0.90      0.90      0.90       100
+```
+]]
 ???
 ---
 class:spacious
@@ -168,9 +191,12 @@ print(classification_report(y_test, y_pred))
 ```
 ```
           precision   recall  f1-score  support
-0              0.91     0.92      0.92       53  
-1              0.96     0.94      0.95       90
-avg/total      0.94     0.94      0.94      143
+           0       0.92      0.91      0.91        53
+           1       0.95      0.96      0.95        90
+
+    accuracy                           0.94       143
+   macro avg       0.93      0.93      0.93       143
+weighted avg       0.94      0.94      0.94       143
 ```
 ```python
 y_pred = lr.predict_proba(X_test)[:, 1] > .85
@@ -179,9 +205,12 @@ print(classification_report(y_test, y_pred))
 ```
 ```
           precision   recall  f1-score  support
-0              0.84     1.00      0.91       53  
-1              1.00     0.89      0.94       90
-avg/total      0.94     0.93      0.93      143
+           0       0.83      0.98      0.90        53
+           1       0.99      0.88      0.93        90
+
+    accuracy                           0.92       143
+   macro avg       0.91      0.93      0.91       143
+weighted avg       0.93      0.92      0.92       143
 
 ```
 ]
@@ -511,17 +540,19 @@ print(classification_report(y_test, pred))
              precision    recall  f1-score   support
 
           0       1.00      1.00      1.00        37
-          1       0.91      0.95      0.93        43
+           1       0.91      0.93      0.92        43
           2       0.98      1.00      0.99        44
           3       1.00      0.96      0.98        45
-          4       0.97      0.97      0.97        38
-          5       0.94      0.98      0.96        48
+           4       0.95      0.97      0.96        38
+           5       0.96      0.96      0.96        48
           6       0.98      0.98      0.98        52
-          7       0.98      0.98      0.98        48
-          8       0.93      0.90      0.91        48
-          9       0.96      0.94      0.95        47
+           7       0.98      0.96      0.97        48
+           8       0.96      0.90      0.92        48
+           9       0.92      0.98      0.95        47
 
-avg / total       0.96      0.96      0.96       450
+    accuracy                           0.96       450
+   macro avg       0.96      0.96      0.96       450
+weighted avg       0.96      0.96      0.96       450
 ```
 ]
 ]
@@ -907,7 +938,7 @@ the errors that you're making.
 ---
 
 class: middle
-# Using metrics
+# Picking metrics
 
 ???
 In summary, for both multiclass and binary, you should
@@ -1006,19 +1037,19 @@ print("\n".join(sorted(SCORERS.keys())))
 ```
 .smaller[
 ```
-print("\n".join(sorted(SCORERS.keys())))
-accuracy                       adjusted_mutual_info_score     adjusted_rand_score            
-average_precision              balanced_accuracy              brier_score_loss               
-completeness_score             explained_variance             f1                             
-f1_macro                       f1_micro                       f1_samples                     
-f1_weighted                    fowlkes_mallows_score          homogeneity_score              
-max_error                      mutual_info_score              neg_log_loss                   
-neg_mean_absolute_error        neg_mean_squared_error         neg_mean_squared_log_error     
-neg_median_absolute_error      normalized_mutual_info_score   precision                      
-precision_macro                precision_micro                precision_samples              
-precision_weighted             r2                             recall                         
-recall_macro                   recall_micro                   recall_samples                 
-recall_weighted                roc_auc                        v_measure_score 
+accuracy                      log_loss                      precision_micro       
+adjusted_mutual_info_score    mean_absolute_error           precision_samples     
+adjusted_rand_score           mean_squared_error            precision_weighted   
+average_precision             median_absolute_error         r2                   
+completeness_score            mutual_info_score             recall               
+explained_variance            neg_log_loss                  recall_macro         
+f1                            neg_mean_absolute_error       recall_micro         
+f1_macro                      neg_mean_squared_error        recall_samples       
+f1_micro                      neg_mean_squared_log_error    recall_weighted
+f1_samples                    neg_median_absolute_error     roc_auc
+f1_weighted                   normalized_mutual_info_score  v_measure_score      
+fowlkes_mallows_score         precision                    
+homogeneity_score             precision_macro              
 ```
 ]
 

@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>Model Evaluation</title>
+
     <meta charset="utf-8">
         <style>
        @import url(https://fonts.googleapis.com/css?family=Garamond);
@@ -24,9 +25,17 @@ class: center, middle
 Andreas C. Müller
 
 ???
+FIXME boston
+FIXME format string
+FIXME add calibration
+FIXME remove regression?
+FIXME top right of pr curve actually maximizes f1
+FIXME no interpolation on pr curve?
+FIXME add plotting
 FIXME macro vs weighted average example
 FIXME balanced accuracy - explain both?
 FIXME roc auc not good for imbalanced!? show example!!
+FIXME sometimes we need to convert to binary classes because pos label is stupid
 
 FIXME remove regression, go into more depth on cost-sensitive?
 FIXME relate to calibration!
@@ -46,19 +55,22 @@ class: centre,middle
 
 # Review : confusion matrix
 .center[
-![:scale 75%](images/confusion_matrix.png)
+![:scale 55%](images/confusion_matrix.png)
 ]
-
-
+.larger[
+$$\text{Accuracy} = \frac{\text{TP} + \text{TN}}{\text{TP} + \text{TN} + \text{FP} + \text{FN}}$$
+]
 ???
 Diagonal divided by everything.
-
+---
+class: center, middle
+# Positive & Negative are arbitrary
+## Though often the minority class is considered positive
 ---
 # 
 .smaller[
 ```python
-from sklearn.datasets import load_breast_cancer
-from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import confusion_matrix, plot_confusion_matrix
 data = load_breast_cancer()
 
 X_train, X_test, y_train, y_test = train_test_split(
@@ -67,16 +79,26 @@ X_train, X_test, y_train, y_test = train_test_split(
 lr = LogisticRegression().fit(X_train, y_train)
 y_pred = lr.predict(X_test)
 
-from sklearn.metrics import confusion_matrix
 print(confusion_matrix(y_test, y_pred))
 print(lr.score(X_test, y_test))
+plot_confusion_matrix(lr, X_test, y_test, cmap='gray_r')
 ```
+```
+[[48  5]
+ [ 4 86]]
+0.94
+```
+
 ]
 
-![:scale 20%](images/breast_cancer_cf_matrix.png)
+![:scale 20%](images/plot_confusion_matrix.png)
+???
+confusion_matrix and accuracy_score take y_true, y_pred
+Note that plot_confusion_matrix takes the estimator.
+We might change that. We'll talk a bit more about that interface later.
 ---
 # Problems with Accuracy
-Data with 90% positives:
+Data with 90% negatives:
 .smaller[
 ```python
 from sklearn.metrics import accuracy_score
@@ -89,6 +111,9 @@ for y_pred in [y_pred_1, y_pred_2, y_pred_3]:
 0.9
 ```
 ]
+
+--
+
 .center[
 ![:scale 70%](images/problems_with_accuracy.png)
 ]
@@ -127,10 +152,23 @@ class: center, spacious
 https://en.wikipedia.org/wiki/Precision_and_recall
 ???
 ---
+# Normalizing the confusion matrix
+```python
+confusion_matrix(y_true, y_pred)
+```
+![:scale 75%](images/confusion_matrix.png)
+```python
+confusion_matrix(y_true, y_pred, normalize='true')
+```
 
+```python
+confusion_matrix(y_true, y_pred, normalize='pred')
+```
+
+---
 class:split-40
 .left-column[
-![:scale 50%](images/confusion_matrix_col.png)]
+![:scale 38%](images/confusion_matrix_col.png)]
 .smallest[
 .right-column[
 ```

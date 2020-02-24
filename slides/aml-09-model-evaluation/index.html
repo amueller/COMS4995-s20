@@ -1045,31 +1045,6 @@ error. So this is usually used for things that are greater
 than one.
 
 ---
-class: spacious
-# Over vs under
--  Overprediction and underprediction can have different cost.
-- Try to create cost-matrix: how much does overprediction and underprediction cost? 
-- Is it linear?
-???
-One of the things you might want to consider is looking at
-how much you under predict versus how much you over predict.
-In a business case under-predicting and overpredicting can
-have different costs. You can try to create a cost matrix to
-state the amount of underprediction or over prediction. You
-can also try to ask if this relationship linear. The most
-natural thing to do would be to look at the residuals and
-ask yourself how much it costs if I make a prediction that
-has this residual. 
-
-And ask is it a linear function of the error or not. Though
-this only looks at the absolute error, you can also do the
-same for relative error. So maybe the first decision is,
-should I look at absolute errors, or should I look at the
-relative errors. And then for each particular bin of how
-much I'm over or under predicting, how much this costs me.
-
-
----
 # Prediction plots
 .wide-left-column[
 .smaller[
@@ -1265,10 +1240,12 @@ Will make GridSearchCV.score use your metric!
 ```
 from sklearn.model_selection import cross_validate
 res = cross_validate(RandomForestClassifier(), X, y,
-                     scoring=["accuracy", "average_precision", "recall_macro"],
+                     scoring=["accuracy", "average_precision",
+                     "recall_macro"],
                      return_train_score=True, cv=5)
 pd.DataFrame(res)
 ```
+.tiny[
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -1282,6 +1259,7 @@ pd.DataFrame(res)
     <tr><th>4</th><td>0.124239</td><td>0.019509</td><td>0.973451</td><td>1.0</td><td>0.998858</td><td>1.0</td><td>0.974011</td><td>1.0</td></tr>
   </tbody>
 </table>
+]
 ---
 # Built-in scoring
 ```python
@@ -1368,25 +1346,29 @@ a very powerful framework so you can do a lot of things with
 it. 
 
 ---
+class: compact
 # You can access the model!
 .tiny-code[
+
 ```python
 def nonzero(est, X, y):
     return np.sum(est.coef_ != 0)
 
 param_grid = {'alpha': np.logspace(-5, 0, 10)}
-
+# scoring can be string, single scorer, list or dict
 grid = GridSearchCV(Lasso(), param_grid, return_train_score=True,
                     scoring={'r2': 'r2', 'num_nonzero': nonzero}, refit='r2')
 grid.fit(X_train, y_train)
-a = results.plot('param_alpha', 'mean_train_r2', legend=False)
-b = results.plot('param_alpha', 'mean_test_r2', ax=plt.gca(), legend=False)
+a = results.plot('param_alpha', 'mean_train_r2') 
+b = results.plot('param_alpha', 'mean_test_r2', ax=plt.gca())
 ax2 = plt.gca().twinx()
-results.plot('param_alpha', 'mean_train_num_nonzero', ax=ax2, c='k', legend=False)
+results.plot('param_alpha', 'mean_train_num_nonzero', ax=ax2, c='k')
 ```
-]
-![:scale 100%](images/lasso_alpha_triazine.png)
 
+]
+.center[
+![:scale 50%](images/lasso_alpha_triazine.png)
+]
 ???
 
 The main thing that I want to illustrate here is that you

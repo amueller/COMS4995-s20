@@ -26,16 +26,17 @@ Andreas C. Müller
 
 ???
 FIXME boston
+FIXME explain scorer interface vs metrics interface, plotting has scorer interface
+FIXME ROC curve slide is bad. Illustration of why random is .5
 FIXME format string
+FIXME demonstrate that AUC / average precision are rancing metrics
 FIXME add calibration
 FIXME remove regression?
 FIXME top right of pr curve actually maximizes f1
 FIXME no interpolation on pr curve?
 FIXME add plotting
 FIXME macro vs weighted average example
-FIXME balanced accuracy - explain both?
 FIXME roc auc not good for imbalanced!? show example!!
-FIXME sometimes we need to convert to binary classes because pos label is stupid
 
 FIXME remove regression, go into more depth on cost-sensitive?
 FIXME relate to calibration!
@@ -43,6 +44,7 @@ FIXME How to pick thresholds in multi-class?
 FIXME Add log-loss to metrics, and show why I don’t like it (.4, .6, 0) is better than (.36, .34, .3)
 FIXME explain why ROC AUC doesn't depend on class imbalance by calculating example
 FIXME write down example on slide about recall being zero and AUC being 1?
+FIXME show example of number nonzero for scorer API
 
 
 ---
@@ -152,21 +154,39 @@ class: center, spacious
 https://en.wikipedia.org/wiki/Precision_and_recall
 ???
 ---
+class: compact
 # Normalizing the confusion matrix
+.smallest[
 ```python
 confusion_matrix(y_true, y_pred)
 ```
-![:scale 75%](images/confusion_matrix.png)
+![:scale 30%](images/confusion_matrix.png)
+]
+.left-column[
+.smallest[
 ```python
-confusion_matrix(y_true, y_pred, normalize='true')
+confusion_matrix(y_true, y_pred,
+                 normalize='true')
 ```
-
+![:scale 80%](images/confusion_matrix_norm_true.png)
+]
+]
+.right-column[
+.smallest[
 ```python
-confusion_matrix(y_true, y_pred, normalize='pred')
+confusion_matrix(y_true, y_pred,
+                 normalize='pred')
 ```
-
+![:scale 80%](images/confusion_matrix_norm_pred.png)
+]
+]
 ---
-class:split-40
+class:compact
+.smallest[
+```python
+classification_report(y_true, y_pred)
+```
+]
 .left-column[
 ![:scale 38%](images/confusion_matrix_col.png)]
 .smallest[
@@ -204,6 +224,199 @@ weighted avg       0.90      0.90      0.90       100
 ]]
 ???
 ---
+# Averaging strategies
+
+`$$\text{macro }\frac{1}{\left|L\right|} \sum_{l \in L} R(y_l, \hat{y}_l)$$`
+
+`$$\text{weighted } \frac{1}{n} \sum_{l \in L} n_l R(y_l, \hat{y}_l)$$`
+
+
+.smaller[
+```python
+print("Weighted average: ", recall_score(y_test, y_pred_1, average="weighted"))
+print("Macro average: ", recall_score(y_test, y_pred_1, average="macro"))
+```
+```
+Weighted average: 0.90
+Macro average: 0.50
+```
+]
+<br />
+???
+Two common ways to approach multitask is to look at averages
+over binary metrics. So you can do binary metrics for
+recall, precision f1 score. But in principle, you could do
+it for more things. And in scikit-learn has several
+averaging strategies.
+
+There is macro, weighted, micro and samples. You should
+really not worried about micro samples, which only apply to
+multi-label prediction. We haven't talked about multi-label
+prediction and we're not going to talk about multi-label
+prediction. Multi-level prediction is when each sample can
+have multiple labels. 
+
+Macro and weighted are the two options. They are
+interesting. For example, for recall, we can look at macro
+average recall, which is the average over all the labels and
+then the recall for just this label. So basically, here y_l
+is the true label, y ̂ is the predicted label. The positive
+class is now label l, and the negative classes is any other
+label, so this is sort of one versus rest version of recall.
+
+
+You can also do a weighted average, you weight by the number
+of samples in each class, and then divide by the total
+number of samples. So again, for each class, I compute
+recall for that class, and then I weight that by the number
+of samples. This is actually what classification report
+reports here.
+
+It's kind of interesting that if you do this, then actually
+looking at precision or recall just by themselves is
+informative. So if you look at macro average recall, that's
+actually also called balanced accuracy or if you look at
+macro average precision, this will be the useful metric by
+itself, because it looks at the precision of each of the
+classes. 
+
+So basically, the choice between macro and weighted is
+whether you think each class should have the same weight, or
+each sample should have the same weight. Let’s say, we have
+recall for one class is 1 and for the other class 0. And for
+the majority class recall is 1 and for the minority, class
+recall is 0. For macro average recall, you would get 0.5
+because you just take the average of the two. If you look at
+a weighted, then the outcome would be the proportion of the
+positive class. So if 90% of the data is positive, you will
+get 90% here. So basically weighted takes the class sizes
+into account and so the bigger classes count for more. If
+you're actually interested in the smaller classes, macro is
+probably better because each class weights the same. Which
+one is the best really depends on your application?
+
+Macro is counted each class the same while weighted is count
+each sample the same. I did this here on the digit data set,
+which is basically balanced and so there's no difference. 
+
+
+micro vs macro same for other metrics.
+---
+class: spacious
+# Balanced Accuracy
+.smaller[
+```python
+balanced_accuracy_score(y_t, y_p) == recall_score(y_t, y_p, average='macro')
+```
+]
+
+$$\text{balanced_accuracy} = \frac{1}{2}\left( \frac{TP}{TP + FP} + \frac{TN}{TN + FN}\right )$$
+
+- Always 0.5 for chance predictions
+- Equal to accuracy for balanced datasets
+---
+# Mammography Data
+
+.smallest[
+.left-column[
+```python
+from sklearn.datasets import fetch_openml
+# mammography https://www.openml.org/d/310
+data = fetch_openml('mammography', as_frame=True)
+X, y = data.data, data.target
+X.shape
+```
+(11183, 6)
+```python
+y.value_counts()
+```
+```
+-1    10923
+1       260
+```
+]
+.right-column[
+.center[
+![:scale 100%](images/mammography_data.png)
+]
+]
+.reset-column[
+```python
+# make y boolean
+# this allows sklearn to determine the positive class more easily
+X_train, X_test, y_train, y_test = train_test_split(X, y == '1', random_state=0)
+```
+]
+]
+???
+I use this mammography data set, which is very imbalanced.
+This is a data set that has many samples, only six features
+and it's very imbalanced.
+
+The datasets are about mammography data, and whether there
+are calcium deposits in the breast. They are often mistaken
+for cancer, which is why it's good to detect them. Since its
+rigidly low dimensional, we can do a scatter plot. And we
+can see that these are much skewed distributions and there's
+really a lot more of one class than the other.
+---
+.smallest[
+.left-column[
+```python
+svc = make_pipeline(StandardScaler(),
+                    SVC(C=100, gamma=0.1))
+svc.fit(X_train, y_train)
+svc.score(X_test, y_test)
+```
+```
+0.986
+```
+]
+.right-column[
+```python
+rf = RandomForestClassifier()
+
+rf.fit(X_train, y_train)
+rf.score(X_test, y_test)
+```
+```
+0.989
+```
+]
+]
+
+--
+
+.reset-column[
+]
+.smallest[
+.left-column[
+```
+              precision   recall  f1-score  support
+
+       False       0.99     1.00      0.99     2732
+        True       0.81     0.53      0.64       64
+
+    accuracy                          0.99     2796
+   macro avg       0.90     0.76      0.82     2796
+weighted avg       0.98     0.99      0.99     2796
+```
+]
+.right-column[
+```
+              precision   recall  f1-score  support
+
+       False       0.99     1.00      0.99     2732
+        True       0.90     0.56      0.69       64
+
+    accuracy                          0.99     2796
+   macro avg       0.94     0.78      0.84     2796
+weighted avg       0.99     0.99      0.99     2796
+```
+
+]
+]
+---
 class:spacious
 # Goal setting!
 - What do I want? What do I care about? 
@@ -217,38 +430,35 @@ class:spacious
 # Changing Thresholds
 .tiny-code[
 ```python
-data = load_breast_cancer()
-
-X_train, X_test, y_train, y_test = train_test_split(
-    data.data, data.target, stratify=data.target, random_state=0)
-
-lr = LogisticRegression().fit(X_train, y_train)
-y_pred = lr.predict(X_test)
-
+y_pred = rf.predict(X_test)
 print(classification_report(y_test, y_pred))
 ```
 ```
-          precision   recall  f1-score  support
-           0       0.92      0.91      0.91        53
-           1       0.95      0.96      0.95        90
+              precision    recall  f1-score   support
 
-    accuracy                           0.94       143
-   macro avg       0.93      0.93      0.93       143
-weighted avg       0.94      0.94      0.94       143
+       False       0.99      1.00      0.99      2732
+        True       0.90      0.56      0.69        64
+
+    accuracy                           0.99      2796
+   macro avg       0.94      0.78      0.84      2796
+weighted avg       0.99      0.99      0.99      2796
+
 ```
 ```python
-y_pred = lr.predict_proba(X_test)[:, 1] > .85
+y_pred = rf.predict_proba(X_test)[:, 1] > .30
+
 
 print(classification_report(y_test, y_pred))
 ```
 ```
-          precision   recall  f1-score  support
-           0       0.83      0.98      0.90        53
-           1       0.99      0.88      0.93        90
+              precision    recall  f1-score   support
 
-    accuracy                           0.92       143
-   macro avg       0.91      0.93      0.91       143
-weighted avg       0.93      0.92      0.92       143
+       False       0.99      0.99      0.99      2732
+        True       0.71      0.64      0.67        64
+
+    accuracy                           0.99      2796
+   macro avg       0.85      0.82      0.83      2796
+weighted avg       0.99      0.99      0.99      2796
 
 ```
 ]
@@ -256,30 +466,88 @@ weighted avg       0.93      0.92      0.92       143
 
 ???
 ---
+class: compact
 # Precision-Recall curve
+.smaller[
 ```python
-X, y = make_blobs(n_samples=(2500, 500), cluster_std=[7.0, 2],
-                  random_state=22)
-
-X_train, X_test, y_train, y_test = train_test_split(X, y)
-
-svc = SVC(gamma=.05).fit(X_train, y_train)
-
-precision, recall, thresholds = precision_recall_curve(
-    y_test, svc.decision_function(X_test))
+svc = make_pipeline(StandardScaler(), SVC(C=100, gamma=0.1))
+svc.fit(X_train, y_train)
+plot_precision_recall_curve(svc, X_test, y_test, name='SVC')
 ```
-
-???
----
-# Precision-Recall curve
+]
 .center[
-![:scale 75%](images/precision_recall_curve.png)
+![:scale 65%](images/precision_recall_curve.png)
 ]
 ???
+---
+# Side note: Scikit-learn plotting API
+.smaller[
+```python
+prc = plot_precision_recall_curve(svc, X_test, y_test, name='SVC')
+# plot pops up here
+prc
+```
+```
+<sklearn.metrics._plot.precision_recall_curve.PrecisionRecallDisplay at ...>
+```
+```python
+vars(pr_svc)
+```
+```
+{'precision': array([0.023, 0.023, 0.023, ..., 1.   , 1.   , 1.   ]),
+ 'recall': array([1.   , 0.984, 0.984, ..., 0.031, 0.016, 0.   ]),
+ 'average_precision': 0.6743452407177641,
+ 'estimator_name': 'Pipeline',
+ 'line_': <matplotlib.lines.Line2D at ... >,
+ 'ax_': <matplotlib.axes._subplots.AxesSubplot at ...>,
+ 'figure_': <Figure size 432x288 with 1 Axes>}
+```
+```python
+# plot again without recomputing
+prc.plot()
+```
+]
+---
+class: compact
+# ROC Curve
+.center[
+## (Receiver Operating Characteristic)
+]
+.smaller[
+```python
+plot_roc_curve(svc, X_test, y_test, name='SVC')
+```
+]
+.center[
+![:scale 65%](images/roc_curve_svc.png)
+]
+???
+---
+.left-column[
+# PR-Curve
+![:scale 100%](images/precision_recall_curve.png)
+]
+.right-column[
+# ROC-Curve
+![:scale 100%](images/roc_curve_svc.png)
+]
+.reset-column[
+- Share one axis (though transposed!?)
+- Interpolation is meaningful on ROC curve but not PR curve
+]
 ---
 # Comparing RF and SVC
+.smallest[
+```python
+pr_svc = plot_precision_recall_curve(svc, X_test, y_test, name='SVC')
+# if we used computed before, we could just call pr_svc.plot()
+# using ax=plt.gca() will plot into the existing axes instead of creating  new ones
+pr_rf = plot_precision_recall_curve(rf, X_test, y_test, ax=plt.gca())
+
+```
+]
 .center[
-![:scale 75%](images/rf_vs_svc.png)
+![:scale 60%](images/rf_vs_svc.png)
 ]
 ???
 We’re going to compare random forest and support vector
@@ -332,13 +600,76 @@ compare models if there are imbalanced classes.
 Related to area under the precision-recall curve
 (with step interpolation)
 ---
-# F1 vs average Precision
-.smaller[
+
+# Area Under ROC Curve (aka AUC)
+.center[
+![:scale 65%](images/roc_curve_svc_auc.png)
+]
+- Always .5 for random/constant prediction
+
+???
+
+And so when you look at the area under the curve, which is
+called ROC AUC, it's always 0.5 for random or constant
+predictions. So it's very easy to say, how much better than
+random are you if you look at ROC AUC. 
+
+I encourage you to read the paper in the link. 
+
+One thing is that the ROC curve is usually much smoother and
+it makes more sense to interpolate it, where the
+precision-recall curve makes less sense to interpolate us.
+But the precision-recall curve can sometimes pick up on more
+fine-grained differences. 
+
+Even though AUC stands for area under the curve, if you see
+it in literature always means the area under the receiver
+operating curve. So AUC always means ROC AUC. 
+
+AUC is a ranking metric. So it takes all possible thresholds
+into account, which means that it's independent of the
+default thresholds. So again, you can have something with
+very low accuracy but still with perfect ROC AUC. 
+---
+# Keep in mind: ranking vs predictions
+```python
+dec = svc.decision_function(X_test)
+np.all((dec > 0) == svc.predict(X_test))
+```
+```
+True
+```
+```python
+print(f1_score(y_test, dec > 0))
+print(average_precision_score(y_test, dec))
+```
+```
+0.641
+0.635
+```
+
+--
+
+```python
+dec_new = dec - 10
+print(f1_score(y_test, dec_new > 0))
+print(average_precision_score(y_test, dec_new))
+```
+```
+0.0
+0.635
+```
+
+---
+# Threshold and ranking metrics
+.left-column[
+.tiny[
 ```python
 from sklearn.metrics import f1_score
-print("f1_score of random forest: {:.3f}".format(
-      f1_score(y_test, rf.predict(X_test))))
-print("f1_score of svc: {:.3f}".format(f1_score(y_test, svc.predict(X_test))))
+f1_rf = f1_score(y_test, rf.predict(X_test))
+print(f"f1_score of random forest: {f1_rf:.3f}")
+f1_svc = f1_score(y_test, svc.predict(X_test))
+print(f"f1_score of svc: {f1_svc:.3f}")
 ```
 
 ```
@@ -346,17 +677,45 @@ f1_score of random forest: 0.709
 f1_score of svc: 0.715
 ```
 ```python
+from sklearn.metrics import balanced_accuracy_score
+ba_rf = balanced_accuracy_score(y_test, rf.predict(X_test))
+print(f"Balanced accuracy of random forest: {ba_rf:.3f}")
+ba_svc = balanced_accuracy_score(y_test, svc.predict(X_test))
+print(f"Balanced accuracy of svc: {ba_svc:.3f}")
+```
+```
+Balanced accuracy of random forest: 0.765
+Balanced accuracy of svc: 0.764
+```
+]
+]
+.right-column[
+.tiny[
+```python
 from sklearn.metrics import average_precision_score
-ap_rf = average_precision_score(y_test, rf.predict_proba(X_test)[:, 1])
-ap_svc = average_precision_score(y_test, svc.decision_function(X_test))
-print("Average precision of random forest: {:.3f}".format(ap_rf))
-print("Average precision of svc: {:.3f}".format(ap_svc))
+ap_rf = average_precision_score(
+y_test, rf.predict_proba(X_test)[:, 1])
+    print(f"Average precision of random forest: {ap_rf:.3f}")
+ap_svc = average_precision_score(
+    y_test, svc.decision_function(X_test))
+print(f"Average precision of svc: {ap_svc:.3f}")
 ```
 ```
 Average precision of random forest: 0.682
 Average precision of svc: 0.693
 ```
-]
+```python
+from sklearn.metrics import roc_auc_score
+auc_rf = roc_auc_score(y_test, rf.predict_proba(X_test)[:, 1])
+print(f"Area under ROC curve of random forest: {auc_rf:.3f}")
+auc_svc = roc_auc_score(y_test, svc.decision_function(X_test))
+print(f"Area under ROC curve of svc: {auc_svc:.3f}")
+```
+```
+Area under ROC curve of random forest: 0.936
+Area under ROC curve of svc: 0.817
+```
+]]
 ???
 Previously, I just have sort of a simple comparison between
 f1 and average precision. I'm comparing these two models. So
@@ -389,94 +748,11 @@ ranking.
 
 AP only considers ranking!
 ---
+class: spacious
+# Further reading on evaluation curves
 
-# ROC Curve
-.center[
-![:scale 100%](images/zoo.png)
-]
-`$$ \text{FPR} = \frac{\text{FP}}{\text{FP}+\text{TN}}$$`
-`$$ \text{TPR} = \frac{\text{TP}}{\text{TP}+\text{FN}} = \text{recall}$$`
-???
-Another very commonly used measure is the ROC curve. It's
-similar to the precision-recall curve. But now you're
-looking the false positive rate and the true positive rate.
-True positive rate is just another name for recall, which is
-true positives divided by true positives plus false
-positives. So of ones that are actually true, how many did I
-get? 
-
-False positive rate is false positives divided by false
-positives plus true negatives. So of everything that's
-predicted as negative, how many of those were wrongly
-predicted as negative.
-
----
-.center[
-![:scale 75%](images/roc_curve.png)
-]
-???
-You can look at this for all possible thresholds. Again, you
-get a curve. Here is the curve for support vector machine
-and random forest again. With the same classifier. And
-again, the thresholds look pretty arbitrary. 
-
-It might be a little bit hard to say which one is better?
-For the precision-recall curve, the optimum was in the top
-right, you want to be in as top right as possible. So you
-want to have a recall of one and the precision of one. 
-
-For the ROC curve, the ideal point is the top left. You want
-a false positive rate of zero and a true positive rate of
-one. One thing that's kind of nice for the ROC curve is that
-no matter what the class imbalances are, the random
-classifier or classifier that predicts everything as the
-same class will be diagonal. 
-
-
----
-# ROC AUC
-- Area under ROC Curve
-- Always .5 for random/constant prediction
-.tiny-code[
-```python
-from sklearn.metrics import roc_auc_score
-rf_auc = roc_auc_score(y_test, rf.predict_proba(X_test)[:,1])
-svc_auc = roc_auc_score(y_test, svc.decision_function(X_test))
-print("AUC for random forest: {:, .3f}".format(rf_auc))
-print("AUC for SVC: {:, .3f}".format(svc_auc))
-```
-
-```
-AUC for random forest: 0.937
-AUC for SVC: 0.916
-```
-]
-The Relationship Between Precision-Recall and ROC Curves
-<br />
-https://www.biostat.wisc.edu/~page/rocpr.pdf
-???
-And so when you look at the area under the curve, which is
-called ROC AUC, it's always 0.5 for random or constant
-predictions. So it's very easy to say, how much better than
-random are you if you look at ROC AUC. 
-
-I encourage you to read the paper in the link. 
-
-One thing is that the ROC curve is usually much smoother and
-it makes more sense to interpolate it, where the
-precision-recall curve makes less sense to interpolate us.
-But the precision-recall curve can sometimes pick up on more
-fine-grained differences. 
-
-Even though AUC stands for area under the curve, if you see
-it in literature always means the area under the receiver
-operating curve. So AUC always means ROC AUC. 
-
-AUC is a ranking metric. So it takes all possible thresholds
-into account, which means that it's independent of the
-default thresholds. So again, you can have something with
-very low accuracy but still with perfect ROC AUC. 
-
+- [The Relationship Between Precision-Recall and ROC Curves](https://www.biostat.wisc.edu/~page/rocpr.pdf)
+- [Precision-Recall-Gain Curves: PR Analysis Done Right](https://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf)
 
 ---
 
@@ -578,15 +854,15 @@ print(classification_report(y_test, pred))
              precision    recall  f1-score   support
 
           0       1.00      1.00      1.00        37
-           1       0.91      0.93      0.92        43
+          1       0.91      0.93      0.92        43
           2       0.98      1.00      0.99        44
           3       1.00      0.96      0.98        45
-           4       0.95      0.97      0.96        38
-           5       0.96      0.96      0.96        48
+          4       0.95      0.97      0.96        38
+          5       0.96      0.96      0.96        48
           6       0.98      0.98      0.98        52
-           7       0.98      0.96      0.97        48
-           8       0.96      0.90      0.92        48
-           9       0.92      0.98      0.95        47
+          7       0.98      0.96      0.97        48
+          8       0.96      0.90      0.92        48
+          9       0.92      0.98      0.95        47
 
     accuracy                           0.96       450
    macro avg       0.96      0.96      0.96       450
@@ -616,85 +892,6 @@ It might make more sense to look at in precision average
 classes, recall over the classes or f1 score for the
 classes. 
 
----
-# Averaging strategies
-- "macro", "weighted", "micro" (multi-label), "samples" (multi-label)
-
-`$$\text{macro }\frac{1}{\left|L\right|} \sum_{l \in L} R(y_l, \hat{y}_l)$$`
-
-`$$\text{weighted } \frac{1}{n} \sum_{l \in L} n_l R(y_l, \hat{y}_l)$$`
-
-
-.smaller[
-```python
-print("Micro average: ", recall_score(y_test, pred, average="weighted"))
-print("Macro average: ", recall_score(y_test, pred, average="macro"))
-```
-```
-Micro average: 0.964
-Macro average: 0.964
-```
-]
-<br />
-???
-Two common ways to approach multitask is to look at averages
-over binary metrics. So you can do binary metrics for
-recall, precision f1 score. But in principle, you could do
-it for more things. And in scikit-learn has several
-averaging strategies.
-
-There is macro, weighted, micro and samples. You should
-really not worried about micro samples, which only apply to
-multi-label prediction. We haven't talked about multi-label
-prediction and we're not going to talk about multi-label
-prediction. Multi-level prediction is when each sample can
-have multiple labels. 
-
-Macro and weighted are the two options. They are
-interesting. For example, for recall, we can look at macro
-average recall, which is the average over all the labels and
-then the recall for just this label. So basically, here y_l
-is the true label, y ̂ is the predicted label. The positive
-class is now label l, and the negative classes is any other
-label, so this is sort of one versus rest version of recall.
-
-
-You can also do a weighted average, you weight by the number
-of samples in each class, and then divide by the total
-number of samples. So again, for each class, I compute
-recall for that class, and then I weight that by the number
-of samples. This is actually what classification report
-reports here.
-
-It's kind of interesting that if you do this, then actually
-looking at precision or recall just by themselves is
-informative. So if you look at macro average recall, that's
-actually also called balanced accuracy or if you look at
-macro average precision, this will be the useful metric by
-itself, because it looks at the precision of each of the
-classes. 
-
-So basically, the choice between macro and weighted is
-whether you think each class should have the same weight, or
-each sample should have the same weight. Let’s say, we have
-recall for one class is 1 and for the other class 0. And for
-the majority class recall is 1 and for the minority, class
-recall is 0. For macro average recall, you would get 0.5
-because you just take the average of the two. If you look at
-a weighted, then the outcome would be the proportion of the
-positive class. So if 90% of the data is positive, you will
-get 90% here. So basically weighted takes the class sizes
-into account and so the bigger classes count for more. If
-you're actually interested in the smaller classes, macro is
-probably better because each class weights the same. Which
-one is the best really depends on your application?
-
-Macro is counted each class the same while weighted is count
-each sample the same. I did this here on the digit data set,
-which is basically balanced and so there's no difference. 
-
-
-micro vs macro same for other metrics.
 
 ---
 # Multi-class ROC AUC
@@ -975,8 +1172,14 @@ the errors that you're making.
 
 ---
 
-class: middle
 # Picking metrics
+
+- Accuracy rarely what you want
+- Problems are rarely balanced
+- Find the right criterion for the task
+- OR pick a substitude, but at least think about it
+- Emphasis on recall or precision?
+- Which classes are the important ones?
 
 ???
 In summary, for both multiclass and binary, you should
@@ -1004,38 +1207,29 @@ values? So and then finally, obviously, am I going to use
 the default threshold? Why am I going to use the default
 threshold? Do I use a ranking based metric? Or is there a
 reason why I would want to use a ranking based metric?
-
-
-- Accuracy rarely what you want
-- Problems are rarely balanced
-- Find the right criterion for the task
-- OR pick one arbitrarily, but at least think about it
-- Emphasis on recall or precision?
-- Which classes are the important ones?
 ---
 # Using metrics in cross-validation
 .smaller[
 ```python
-X, y = make_blobs(n_samples=(2500, 500), cluster_std=[7.0, 2],
-                  random_state=22)
+cancer = load_breast_cancer()
+X, y = cancer.data, cancer.target
 
 # default scoring for classification is accuracy
-scores_default = cross_val_score(SVC(), X, y)
+rf = RandomForestClassifier(random_state=0)
+print("default scoring ", cross_val_score(rf, X, y))
 
 # providing scoring="accuracy" doesn't change the results
-explicit_accuracy =  cross_val_score(SVC(), X, y, scoring="accuracy")
+explicit_accuracy =  cross_val_score(rf, X, y,  scoring="accuracy")
+print("explicit accuracy scoring ", explicit_accuracy)
 
-# using ROC AUC
-roc_auc =  cross_val_score(SVC(), X, y, scoring="roc_auc")
-
-print("Default scoring:", scores_default)
-print("Explicit accuracy scoring:", explicit_accuracy)
-print("AUC scoring:", roc_auc)
+ap =  cross_val_score(rf, X, y, scoring="average_precision")
+print("average precision", ap)
 ```
 ```
-Default scoring: [ 0.92   0.904  0.913]
-Explicit accuracy scoring: [ 0.92   0.904  0.913]
-AUC scoring: [ 0.93   0.885  0.923]
+default scoring  [0.93  0.947 0.991 0.974 0.973]
+explicit accuracy scoring  [0.93  0.947 0.991 0.974 0.973]
+average precision [0.992 0.973 0.999 0.995 0.999]
+
 ```
 ]
 
@@ -1066,7 +1260,28 @@ or average precision or recall macro.
 Same for GridSearchCV
 <br />
 Will make GridSearchCV.score use your metric!
-
+---
+# Multiple Metrics
+```
+from sklearn.model_selection import cross_validate
+res = cross_validate(RandomForestClassifier(), X, y,
+                     scoring=["accuracy", "average_precision", "recall_macro"],
+                     return_train_score=True, cv=5)
+pd.DataFrame(res)
+```
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th><th>fit_time</th><th>score_time</th><th>test_accuracy</th><th>train_accuracy</th><th>test_average_precision</th><th>train_average_precision</th><th>test_recall_macro</th><th>train_recall_macro</th></tr>
+  </thead>
+  <tbody>
+    <tr><th>0</th><td>0.171312</td><td>0.016973</td><td>0.921053</td><td>1.0</td><td>0.992115</td><td>1.0</td><td>0.918277</td><td>1.0</td></tr>
+    <tr><th>1</th><td>0.133090</td><td>0.017563</td><td>0.938596</td><td>1.0</td><td>0.972293</td><td>1.0</td><td>0.923190</td><td>1.0</td></tr>
+    <tr><th>2</th><td>0.110232</td><td>0.015200</td><td>0.982456</td><td>1.0</td><td>0.999098</td><td>1.0</td><td>0.981151</td><td>1.0</td></tr>
+    <tr><th>3</th><td>0.110211</td><td>0.015076</td><td>0.956140</td><td>1.0</td><td>0.992924</td><td>1.0</td><td>0.950397</td><td>1.0</td></tr>
+    <tr><th>4</th><td>0.124239</td><td>0.019509</td><td>0.973451</td><td>1.0</td><td>0.998858</td><td>1.0</td><td>0.974011</td><td>1.0</td></tr>
+  </tbody>
+</table>
 ---
 # Built-in scoring
 ```python
@@ -1075,19 +1290,22 @@ print("\n".join(sorted(SCORERS.keys())))
 ```
 .smaller[
 ```
-accuracy                      log_loss                      precision_micro       
-adjusted_mutual_info_score    mean_absolute_error           precision_samples     
-adjusted_rand_score           mean_squared_error            precision_weighted   
-average_precision             median_absolute_error         r2                   
-completeness_score            mutual_info_score             recall               
-explained_variance            neg_log_loss                  recall_macro         
-f1                            neg_mean_absolute_error       recall_micro         
-f1_macro                      neg_mean_squared_error        recall_samples       
-f1_micro                      neg_mean_squared_log_error    recall_weighted
-f1_samples                    neg_median_absolute_error     roc_auc
-f1_weighted                   normalized_mutual_info_score  v_measure_score      
-fowlkes_mallows_score         precision                    
-homogeneity_score             precision_macro              
+accuracy                       adjusted_mutual_info_score     adjusted_rand_score
+average_precision              balanced_accuracy              completeness_score
+explained_variance             f1                             f1_macro
+f1_micro                       f1_samples                     f1_weighted
+fowlkes_mallows_score          homogeneity_score              jaccard
+jaccard_macro                  jaccard_micro                  jaccard_samples
+jaccard_weighted               max_error                      mutual_info_score
+neg_brier_score                neg_log_loss                   neg_mean_absolute_error
+neg_mean_gamma_deviance        neg_mean_poisson_deviance      neg_mean_squared_error
+neg_mean_squared_log_error     neg_median_absolute_error      neg_root_mean_squared_error
+normalized_mutual_info_score   precision                      precision_macro
+precision_micro                precision_samples              precision_weighted
+r2                             recall                         recall_macro
+recall_micro                   recall_samples                 recall_weighted
+roc_auc                        roc_auc_ovo                    roc_auc_ovo_weighted
+roc_auc_ovr                    roc_auc_ovr_weighted           v_measure_score
 ```
 ]
 
@@ -1108,6 +1326,22 @@ because the grid search assumes greater is better so you
 have to use negative mean squared error. So for regression
 or log loss, you use mean squared error. For classification,
 you need to use the neg log loss one.
+
+---
+# The Scorer interface (vs the metrics interface)
+```python
+# metric function interface:
+y_probs = rf.predict_proba(X_test)
+ap_rf = average_precision_score(y_test, y_probs[:, 1])
+y_pred = rf.predict(X_test)
+ba_rf = balanced_accuracy_score(y_test, y_pred)
+# scorer interface:
+from sklearn.metrics import get_scorer
+ap_scorer = get_scorer('average_precision')
+ap_rf = ap_scorer(rf, X_test, y_test)
+ab_scorer = get_scorer('balanced_accuracy')
+ba_rf = ab_scorer(rf, X_test, y_test)
+```
 
 ---
 class:spacious
@@ -1135,45 +1369,25 @@ it.
 
 ---
 # You can access the model!
-.tiny-code[```python
-def few_support_vectors(est, X, y):
-    acc = est.score(X, y)
-    frac_sv = len(est.support_) / np.max(est.support_)
-    # I just made this up, don't actually use this
-    return acc / frac_sv```
+.tiny-code[
 ```python
-from sklearn.model_selection import GridSearchCV
+def nonzero(est, X, y):
+    return np.sum(est.coef_ != 0)
 
-param_grid = {'C': np.logspace(-3, 2, 6),
-              'gamma': np.logspace(-3, 2, 6) / X_train.shape[0]}
-grid = GridSearchCV(SVC(), param_grid=param_grid, cv=10)
+param_grid = {'alpha': np.logspace(-5, 0, 10)}
+
+grid = GridSearchCV(Lasso(), param_grid, return_train_score=True,
+                    scoring={'r2': 'r2', 'num_nonzero': nonzero}, refit='r2')
 grid.fit(X_train, y_train)
-print(grid.best_params_)
-print(grid.score(X_test, y_test))
-print(len(grid.best_estimator_.support_))
+a = results.plot('param_alpha', 'mean_train_r2', legend=False)
+b = results.plot('param_alpha', 'mean_test_r2', ax=plt.gca(), legend=False)
+ax2 = plt.gca().twinx()
+results.plot('param_alpha', 'mean_train_num_nonzero', ax=ax2, c='k', legend=False)
 ```
-```
-{'C': 10.0, 'gamma': 0.074}
-0.991
-498
-```
-```python
-param_grid = {'C': np.logspace(-3, 2, 6),
-              'gamma': np.logspace(-3, 2, 6) / X_train.shape[0]}
-grid = GridSearchCV(SVC(), param_grid=param_grid, cv=10, scoring=few_support_vectors)
-grid.fit(X_train, y_train)
-print(grid.best_params_)
-print((grid.predict(X_test) == y_test).mean())
-print(len(grid.best_estimator_.support_))
-```
-```
-{'C': 100.0, 'gamma': 0.007}
-0.978
-405
-```]
+]
+![:scale 100%](images/lasso_alpha_triazine.png)
+
 ???
-I can define a metric for support vector machines that
-penalizes having a lot of support vectors.
 
 The main thing that I want to illustrate here is that you
 can have access to the model. So you can write a function

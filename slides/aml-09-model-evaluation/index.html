@@ -310,7 +310,7 @@ balanced_accuracy_score(y_t, y_p) == recall_score(y_t, y_p, average='macro')
 ```
 ]
 
-$$\text{balanced_accuracy} = \frac{1}{2}\left( \frac{TP}{TP + FP} + \frac{TN}{TN + FN}\right )$$
+$$\text{balanced_accuracy} = \frac{1}{2}\left( \frac{TP}{TP + FN} + \frac{TN}{TN + FP}\right )$$
 
 - Always 0.5 for chance predictions
 - Equal to accuracy for balanced datasets
@@ -759,7 +759,7 @@ class: spacious
 # Summary of metrics for binary classification
 
 Threshold-based:
-- accuracy
+- (balanced) accuracy
 - precision, recall, f1
 
 Ranking:
@@ -826,23 +826,14 @@ X_train, X_test, y_train, y_test = train_test_split(
 lr = LogisticRegression().fit(X_train, y_train)
 pred = lr.predict(X_test)
 print("Accuracy: {:.3f}".format(accuracy_score(y_test, pred)))
-print("Confusion matrix:")
-print(confusion_matrix(y_test, pred))
+plot_confusion_matrix(lr, X_test, y_test, cmap='gray_r')
+
 ```
 ```
 Accuracy: 0.964
-Confusion matrix:
-[[37  0  0  0  0  0  0  0  0  0]
- [ 0 41  0  0  0  0  1  0  1  0]
- [ 0  0 44  0  0  0  0  0  0  0]
- [ 0  0  0 43  0  0  0  0  1  1]
- [ 0  0  0  0 37  0  0  1  0  0]
- [ 0  0  0  0  0 47  0  0  0  1]
- [ 0  1  0  0  0  0 51  0  0  0]
- [ 0  0  0  0  1  0  0 47  0  0]
- [ 0  3  1  0  0  1  0  0 43  0]
- [ 0  0  0  0  0  2  0  0  1 44]]
 ```
+![:scale 70%](images/confusion_matrix_digits.png)
+
 ]
 ]
 .right-column[
@@ -899,7 +890,6 @@ classes.
 `$$ \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k \neq j}^{c} AUC(j,k)$$`
 - Provost &amp; Domingo, 2000, one vs rest
 `$$ \frac{1}{c}\sum_{j=1}^{c}p(j) AUC(j,\text{rest}_j)$$`
-- https://github.com/scikit-learn/scikit-learn/pull/7663
 ???
 You can do that similar for ROC AUC. It will soon be
 available in scikit-learn. There are basically two versions
@@ -1263,7 +1253,7 @@ pd.DataFrame(res)
 ---
 # Built-in scoring
 ```python
-from sklearn.metrics.scorer import SCORERS
+from sklearn.metrics import SCORERS
 print("\n".join(sorted(SCORERS.keys())))
 ```
 .smaller[

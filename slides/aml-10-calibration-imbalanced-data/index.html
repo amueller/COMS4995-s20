@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Imbalanced Data</title>
+    <title>Calibration, Imbalanced Data</title>
     <meta charset="utf-8">
         <style>
        @import url(https://fonts.googleapis.com/css?family=Garamond);
@@ -17,27 +17,514 @@ class: center, middle
 
 ### W4995 Applied Machine Learning
 
-# Working with Imbalanced Data
+# Calibration, Imbalanced Data
 
 03/02/20
 
 Andreas C. Müller
 
 ???
+Today we'll expand on the model evaluation topic we started last week,
+and we'll talk more on how we can build better models for imbalanced data
+
 Today we’ll talk about working with imbalanced data. We
 already talked about how accuracy is a bad measure and what
 are the other measures we can use.
 
+FIXME: add example of calibrated and
+inaccurate vs accurate but not calibrated! (always saying 50% is calibrated)
+FIXME: brier score decomposition
+FIXME calibration scores
+FIXME maybe saying "sort" before binning is confusing?
+
+FIXME update metrics slides from metrics lecture
 FIXME better illustration for sampling
 FIXME better motivation for sampling / why we want to change things
-FIXME TOO SHORT
 FIXME Add estimators minimizing loss directly?
 FIXME add more on imbalanced forest
-FIXME remove weird sampling? better benchmarking for SMOTE
+FIXME better benchmarking for SMOTE
 FIXME show grid-search results
 FIXME grid-search SMOTE show uncertainty
 FIXME research comparison papers more
 FIXME smote: clarify to only sample from same class
+---
+class:spacious
+#Calibration
+.center[
+<a href="http://www.datascienceassn.org/sites/default/files/
+Predicting%20good%20probabilities%20with%20supervised%20learning.pdf">Source</a>
+]
+- Probabilities can be much more informative than labels:
+
+- “The model predicted you don’t have cancer” vs “The model predicted you’re 40% likely to have cancer”
+
+???
+So the next thing I want to talk about is calibrations.
+Calibration also builds a model on top of a model. But the
+goal of calibration is to actually get accurate probability
+estimates. Oftentimes, we’re interested not only in the
+output of the classifier, but also interested in the
+uncertainty estimate of a classifier.
+
+So for example, think about a model that does cancer
+prediction. If the model predicted you don't have cancer,
+you're going to be pretty happy. If it says there’s a 40%
+chance that you have cancer, which is the same thing if you
+have a binary classification, you might be less happy since
+40% seems pretty high for having cancer anyway.
+
+So often, we want actual probability estimates that allow us
+to make decisions that are finer grained than just a yes or
+no.
+
+Calibration is a way to get probability estimates out of any
+models. For example, SVMs are not good at breaking
+probabilities, so you can use calibration if you really want
+to use an SVM and get the probabilities out. Or if you have
+a model that already was able to predict probabilities like
+tree or random forests or nearest neighbors, you can use
+calibration to make sure that the probabilities that you get
+are actually good probabilities. So if you use random forest
+and use it to estimate probabilities, if it says “this is
+70% class one”, it's not really clear what it means because
+the model is not really trained to optimize probability
+estimates so the probability estimates could be off quite a
+bit.
+
+---
+class: spacious
+#Calibration curve (Reliability diagram)
+.left-column[
+![:scale 100%](images/prob_table.png)
+]
+.right-column[
+![:scale 100%](images/calib_curve.png)
+
+]
+
+???
+Before we talk about how to do calibration, I want to talk
+about how to measure calibration and binary classification.
+You can also do it for multiclass classification, but binary
+is much simpler. The cool thing about it is you can actually
+measure calibration and you can calibrate the classifier
+without having round first the probability estimates. So
+even if you only have like 0 or 1 labels you can still make
+sure that you have a model that provides reasonable
+probabilities.
+
+The way you do this if you take the probability estimates of
+the model, you bin the probability... So here, for example,
+let's say these are probabilities estimate by a model, these
+are my true targets. So now I sort and bin them by the
+probability estimates.
+
+And then I create three bins. And then I look at what is the
+actual prevalence of the classes in each of these bins.
+
+If these probabilities estimates were actually accurate,
+then let's say if I have a bin for all the 90% ones, the
+prevalence in the 90% bin should actually be 90%, that's
+sort of what it says. 90% of the points that are given a
+score of 90% should be the true class. And so you can plot
+this in the calibration curve or the reliability diagram.
+
+So here I have three bins. And basically what I wanted is
+the diagonal line where the bin that contains the very small
+probabilities has the same prevalence. And so here, for
+example, things that are around like 0.5 actually have zero
+prevalence. So there's no true class in there, which is
+really weird. You won’t use a diagonal line, this would be a
+very bad classifier.
+
+One thing that I want to emphasize here is that calibration
+doesn't imply that the model is accurate. These are actually
+two different things. If I have a binary model on a balanced
+data set, and it always says 50% probability for all data
+points. It's perfectly calibrated because it says 50% for
+all data points. 50% of those data points are actually the
+true class if the dataset is balanced. So it's a completely
+trivial classifier that doesn't tell you anything but
+perfectly calibrated, but also kind of tells you nothing
+because it always gives you 0.5. So you know that you can
+trust it basically.
+
+Calibration basically tells you how much you can trust the
+model.
+
+
+- For binary classification only
+- you can be calibrated and inaccurate!
+- Given a predicted ranking or probability from a supervised classifier, bin predictions.
+- Plot fraction of data that’s positive in each bin.
+- Doesn’t require ground truth probabilities!
+
+---
+class: split-40
+# calibration_curve with sklearn
+
+Using subsample of covertype dataset
+.left-column[
+.tiny-code[
+```python
+from sklearn.linear_model import LogisticRegressionCV
+print(X_train.shape)
+print(np.bincount(y_train))
+lr = LogisticRegressionCV().fit(X_train, y_train)
+(52292, 54)
+[19036 33256]```
+
+
+```python
+lr.C_
+array([ 2.783])
+```
+
+```python
+print(lr.predict_proba(X_test)[:10])
+print(y_test[:10])
+[[ 0.681  0.319]
+ [ 0.049  0.951]
+ [ 0.706  0.294]
+ [ 0.537  0.463]
+ [ 0.819  0.181]
+ [ 0.     1.   ]
+ [ 0.794  0.206]
+ [ 0.676  0.324]
+ [ 0.727  0.273]
+ [ 0.597  0.403]]
+[0 1 0 1 1 1 0 0 0 1]
+```
+
+]
+]
+
+.right-column[
+.tiny-code[
+```python
+from sklearn.calibration import calibration_curve
+probs = lr.predict_proba(X_test)[:, 1]
+prob_true, prob_pred = calibration_curve(y_test, probs, n_bins=5)
+print(prob_true)
+print(prob_pred)
+[ 0.2    0.303  0.458  0.709  0.934]
+[ 0.138  0.306  0.498  0.701  0.926]
+```
+]
+.center[![:scale 70%](images/predprob_positive.png)
+]
+]
+
+???
+I'm using a subsample of cover type dataset because it's
+kind of big and we get some nice histograms here. So I train
+a logistic regression model. Logistic regression typically
+gives pretty good probability estimates. So I expect this
+model to be relatively well calibrated.
+
+For the first 10 data points, the probabilities and the
+actual predictions. So what I'm going to take is the
+predicted probabilities for all data points, for the first
+class and the actual predictions.
+
+Obviously, I need to do this on the test set. If I do this
+on the training set, then it'll tell me nothing, because on
+the training set the model is good. So either I need to do
+this on a test set or on some of the holdout set. On the
+training set, if I perfectly overfit, I would be doing
+perfect, but that's not the point. So here, I need to use a
+separate set and so I can compute the calibration curve.
+
+You can see the histogram here shows how many points are in
+this area. And here, the orange thing is the actual
+calibration curve, the dotted line is sort of perfect
+calibration. And in here, I’m using five bins. The first bin
+is zero until 0.2, so I would expect that 10% of the data in
+this bin 10 is the true class, but actually, it's more like
+20%. So here, it's like not perfectly calibrated.
+
+In the second bin from 0.2 to 0.4. So what I would expect is
+that 30% of these data points are predicted as class one and
+actually- it's 30%.
+
+---
+class:spacious
+#Influence of number of bins
+
+.center[![:scale 100%](images/influence_bins.png)]
+
+???
+How do I pick the number of bins?
+
+More bins give me more resolution. But also at some point,
+you get noise. So I guess it's the same way you would do for
+histogram. You can use the standard heuristic for histogram
+but usually, if you do something like 10 or 20, that's
+usually enough bins.
+
+
+- Works here because dataset is big
+- Might become very noisy for larger datasets
+---
+class:spacious
+# Comparing Models
+
+.center[![:scale 90%](images/calib_curve_models.png)]
+???
+Logistic regression is pretty well calibrated. The decision
+tree, since I didn't use any pruning, it'll be way too
+certain. So all probabilities estimates, even on a test set
+that will be either 0 or 1. So that's not very great. Random
+forest classifier used here is not certain enough.
+
+Now we want to fix that. Before I want to say how we can
+trust them let's measure them first.
+
+
+---
+# Brier Score (for binary classification)
+
+- “mean squared error of probability estimate”
+`$$ BS = \frac{\sum_{i=1}^{n} (\widehat{p} (y_i)-y_i)^{2}}{n}$$`
+
+.center[![:scale 70%](images/models_bscore.png)]
+???
+This graph is a nice way to look at how calibrated something
+is. But it's very hard to compare. A standard way to compare
+calibration is a Brier score, you could also use something
+like a log loss. Log loss would also tell you how good that
+a probability estimate is.
+
+Brier score is the mean squared error of probability
+estimates.  Yi is either one or zero, basically, and p ̂ is
+the probability estimate.
+
+So if you predict 0.5 then it's always going to give you a
+loss, but it's going to give you a loss of only 0.5. If you
+predict 0 when you should’ve predicted 1 then it's going to
+give you a very large loss.
+
+Here are the brier loss for the different models. Also, the
+smaller is better. But this conflates accuracy and
+calibration a little bit because here, you can see that the
+random forest actually does best-.
+
+I guess it does better because just it's a more accurate
+model. So it's not well calibrated. But it is actually a
+much better predictor and so it still has a smaller score.
+
+We defined it, we can measure it and we actually want to
+calibrate it.
+
+---
+# Fixing it: Calibrating a classifier
+- Build another model, mapping classifier probabilities to better probabilities!
+- 1d model! (or more for multi-class)
+
+`$$ f_{callib}(s(x)) \approx p(y)$$`
+
+
+
+- s(x) is score given by model, usually
+- Can also work with models that don’t even provide probabilities!
+Need model for $f_{callib}$, need to decide what data to train it on.
+- Can train on training set → Overfit
+- Can train using cross-validation → use data, slower
+
+???
+The way to do fix this is similar to stacking and that we
+built another model on top of the probability estimates. So
+usually, that's just a 1D model because we only have 1
+underlying model.
+
+If you have binary classification it gives us a single
+probability output and so we need to learn 1D function that
+basically maps this probability to something that is more
+accurate.
+
+It also works if the model gives us a score rather than a
+probability. SVM only gives us a score, we can still learn
+one leave function that tries to get probabilities.
+
+Similar to what we did was stacking. So you don't want to
+learn this the calibration model on the training data set
+because on train dataset you're doing very well. So you need
+to use either a whole dataset or you need to use
+cross-validation again.
+
+---
+
+# Platt Scaling
+
+- Use a logistic sigmoid for $f_{callib}$
+- Basically learning a 1d logistic regression
+- (+ some tricks)
+- Works well for SVMs
+
+`$$f_{platt} = \frac{1}{1 + exp(-ws(x) - b)}$$`
+
+
+???
+There are two main methods that people use and both are in
+scikit-learn. One is Platt scaling, Platt scaling is
+basically the same as 1D logistic regression. So you learn
+to 1d just sigmoid plus, there's like some new tricks.
+
+This basically allows you to fix a particular sigmoid shape
+that you usually get from SVM scores and this works well for
+SVMs. But you only have one parameter here, so there's not a
+lot that you can tune.
+
+
+---
+# Isotonic Regression
+
+- Very flexible way to specify $f_{callib}$
+- Learns arbitrary monotonically increasing step-functions in 1d.
+- Groups data into constant parts, steps in between.
+- Optimum monotone function on training data (wrt mse).
+.center[![:scale 40%](images/isotonic_regression.png)]
+
+???
+
+The other one is Isotonic regression, which is basically a
+non-parametric mapping. What it does is it fits the monotone
+function that minimizes the squared error.
+
+The problem it’s solving is the peace wise constant function
+that’s monotonous with minimums error. So this what it looks
+like and so if you have to data in red, then standard
+regression will find this green thing.
+
+In Platt scaling, s(x) is what the model scores, the score
+that comes from the SVM or random forest. The w is the one
+parameter you learn from the data. This is a very inflexible
+model that allows you to say how steep should the sigmoid
+correction be while Isotonic regression is a very flexible
+model that allows you to correct anything in any way, it’s
+monotonous.
+
+
+---
+class:spacious
+# Building the model
+- Using the training set is bad
+- Either use hold-out set or cross-validation
+- Cross-validation can be used to make unbiased probability predictions, use that as training set.
+
+???
+---
+class: center
+# Fitting the calibration model
+![:scale 70%](images/calibration_val_scores.png)
+---
+class: center
+
+# Fitting the calibration model
+![:scale 70%](images/calibration_val_scores_fitted.png)
+
+---
+# CalibratedClassifierCV
+.tiny-code[
+```python
+from sklearn.calibration import CalibratedClassifierCV
+X_train_sub, X_val, y_train_sub, y_val = train_test_split(X_train, y_train,
+                                                          stratify=y_train, random_state=0)
+rf = RandomForestClassifier().fit(X_train_sub, y_train_sub)
+scores = rf.predict_proba(X_test)[:, 1]
+plot_calibration_curve(y_test, scores, n_bins=20)
+```
+.center[![:scale 30%](images/random_forest.png)]
+]
+???
+---
+# Calibration on Random Forest
+.smaller[
+```python
+cal_rf = CalibratedClassifierCV(rf, cv="prefit", method='sigmoid')
+cal_rf.fit(X_val, y_val)
+scores_sigm = cal_rf.predict_proba(X_test)[:, 1]
+
+cal_rf_iso = CalibratedClassifierCV(rf, cv="prefit", method='isotonic')
+cal_rf_iso.fit(X_val, y_val)
+scores_iso = cal_rf_iso.predict_proba(X_test)[:, 1]
+```]
+
+.center[![:scale 90%](images/types_callib.png)]
+
+???
+This is for a random forest again. It can use calibrated
+classifier CV. This does calibration. You can either you do
+it with single hold-out dataset or with cross-validation.
+
+Here, I'm using a single holdout set. I split my dataset,
+the training set into X_train_sub and X_val.
+
+X_train_sub is what I used to train a random forest and then
+x_val is what I'm going to use to calibrate it. I created
+calibrated classifier CV with the random forest that I’ve
+already fit on the training dataset. I set cross-validation
+to prefit and set the method to sigmoid. And then I can fit
+this calibration model on the validation set.
+
+So here is what this looks like, the random forest model
+with no calibration, with sigma calibration and with
+isotonic calibration.
+
+In this case, sigmoid and isotonic don't look very
+different. They both look like reasonably calibrated.
+
+That said if you're doing sort of holdout set, destroying
+away a bunch of data for training your first model.
+
+
+---
+
+# Cross-validated Calibration
+
+```python
+cal_rf_iso_cv = CalibratedClassifierCV(rf, method='isotonic')
+cal_rf_iso_cv.fit(X_train, y_train)
+scores_iso_cv = cal_rf_iso_cv.predict_proba(X_test)[:, 1]
+```
+
+.center[![:scale 90%](images/types_callib_cv.png)]
+
+???
+So we can also not specify CV, then it uses
+cross-validation, I think 3 fold by default.
+
+And so then it does the whole cross-validation thing
+internally. And then I get an even better calibration. So
+what it does here for each cross-validation it trains a
+separate model. And then if I want to predict on the test
+set, it uses all of these models and then averages them. So
+in a sense, it's not very surprising that I get a better
+result here because I built 3 random forest models on
+subsets of the data and then average them. I calibrated them
+and I averaged calibrated models. So I basically just build
+a bigger random forest, so it's not very surprising that it
+does better. Also, we were able to use more data.
+
+So if you do this, you retain as many models as there are
+cross-validation folds and you use all of them in
+prediction.
+
+- kinda cheating, we have more trees now lol
+- we use all the data, get good probabilities. just time-consuming
+---
+# Multi-Class Calibration
+
+.center[![:scale 100%](images/multi_class_calibration.png)]
+
+???
+You can also do this for multi-class calibration, which does
+basically the same thing, but you just do it for each class
+individually and then you normalize again and you can make
+pretty pictures.
+
+- per-class calibratoin
+- renormalization
 ---
 class: center, middle
 
@@ -214,16 +701,6 @@ really a lot more of one class than the other.
 
 
 ---
-
-# Mammography Data
-
-.center[
-![:scale 85%](images/mammography_features23.png)
-]
-
-???
----
-
 # Mammography Data
 
 .smaller[
@@ -620,30 +1097,6 @@ basically using the IID data set. But precision and false
 positive rate measure quite different things.
 
 ---
-# ROC or PR?
-
-FPR or Precision?
-
-`$$ \large\text{FPR} = \frac{\text{FP}}{\text{FP}+\text{TN}}$$`
-
-`$$ \large\text{Precision} = \frac{\text{TP}}{\text{TP}+\text{FP}}$$`
-
-???
-The false positive rate is how many false positives are
-there among the negatives. If you have a very imbalanced
-problem, the FPR is not very interesting because usually,
-the true negatives are much bigger than anything else which
-will end up distorting the curve.
-
-If you're looking at a high precision model, so high
-precision for the minority class, then looking at the
-precision-recall curve is much more informative. Because for
-the high precision you can see that the blue and orange
-model are really very much better than the green model.
-
-
-fIXME think of better explanation
----
 class: spacious
 
 # Class-weights
@@ -863,197 +1316,6 @@ methods.
 ---
 class: center, middle
 
-# Smart resampling
-## (based on nearest neighbour heuristics from the 70's)
-
-???
-Now I want to talk about some other resampling strategies
-called smart resampling strategies. They're based on
-heuristics for nearest neighbor classification from the 70s.
-In the 70s, they came up with a bunch of ways to basically
-prune the dataset to make a better and faster prediction on
-nearest neighbors. So now some people use the same methods
-to basically prune the majority class, instead of randomly
-undersampling the majority class, it strategically removes
-samples from the majority class.
----
-class: spacious
-
-# Edited Nearest Neighbours
-
-- Originally as heuristic for reducing dataset for KNN
-- Remove all samples that are misclassified by KNN
-from training data (mode) or that have any point
-from other class as neighbor (all).
-- “Cleans up” outliers and boundaries.
-
-???
-One is the edited nearest neighbors. This is the originally
-used as a heuristic for reducing dataset for KNN. And it
-removes all samples that are misclassified by KNN from the
-training data. Or if they have any of the K neighbors is
-from the other class at all. So basically, what you're doing
-here is you clean up outliers and boundaries.
----
-
-.center[
-![:scale 90%](images/edited_nearest_neighbour.png)
-]
-
-???
-This is a synthetic data set. You have a minority class of
-blue and majority class of green. Basically, all the samples
-of the class of the majority class that are impinging on the
-territory of the minority class here are removed. This will
-clearly give you more recall on class one (the minority
-class) because a bigger area will be classified as blue in
-this case.
----
-
-# Edited Nearest Neighbours
-
-.smaller[
-```python
-from imblearn.under_sampling import EditedNearestNeighbours
-enn = EditedNearestNeighbours(n_neighbors=5)
-X_train_enn, y_train_enn = enn.fit_sample(X_train, y_train)
-
-enn_mode = EditedNearestNeighbours(kind_sel="mode", n_neighbors=5)
-X_train_enn_mode, y_train_enn_mode = enn_mode.fit_sample(X_train, y_train)
-```
-.center[
-![:scale 100%](images/edited_nearest_neighbour_2.png)
-]
-]
-
-???
-This is for the mammography dataset. The first one is the
-original dataset, the second one is with mode and the third
-is with all. The second one means all the blue points get
-removed if they would be classified by 5 nearest neighbors
-as orange and the third if they have any orange point in
-their neighborhood.
-
-This picture doesn't really make this clear, because it's in
-six dimensions. So you would think many more points are
-removed but actually, in the six dimensions, only very few
-of the points got removed, because most of the points are
-not along the boundary.
-
-So definitely, in terms of computation, this doesn't really
-help as much. It might help us in terms of accuracy.
-
----
-# Edited Nearest Neighbours
-
-.smaller[
-```python
-enn_pipe = make_imb_pipeline(EditedNearestNeighbours(n_neighbors=5),
-                             LogisticRegression())
-scores = cross_validate(enn_pipe, X_train, y_train, cv=10,
-                        scoring=('roc_auc', 'average_precision'))
-scores['test_roc_auc'].mean(), scores['test_average_precision'].mean()
-# baseline was 0.920, 0.630
-```
-0.920, 0.627
-```python
-enn_pipe_rf = make_imb_pipeline(EditedNearestNeighbours(n_neighbors= 5),
-                                RandomForestClassifier())
-scores = cross_validate(enn_pipe_rf, X_train, y_train, cv=10,
-                        scoring=('roc_auc', 'average_precision'))
-scores['test_roc_auc'].mean(), scores['test_average_precision'].mean()
-# baseline was 0.939, 0.722
-```
-0.940, 0.687
-]
-???
-
----
-
-# Condensed Nearest Neigbours
-
-- Iteratively adds points to the data that are
-misclassified by KNN
-- Focuses on the boundaries
-- Usually removes many
-
-```python
-cnn = CondensedNearestNeighbour()
-X_train_cnn, y_train_cnn = cnn.fit_sample(X_train, y_train)
-print(X_train_cnn.shape)
-print(np.bincount(y_train_cnn))
-```
-(556, 6) </br>
-[361 195]
-
-???
-Interestingly, there's another approach called condensed
-nearest neighbor, which does exactly the opposite. This also
-was proposed to prune nearest neighbors and it focuses on
-the boundaries. It'll focus on the outliers in the
-boundaries and remove data points that are in the center of
-the class. This iteratively adds points to the majority
-class that is misclassified by K nearest neighbor. So
-basically, you look at all the misclassified, you pick a
-random one as misclassified, and then you add it to your
-dataset. This really prunes down the dataset a lot. So here,
-you can see that it prune down the majority class to 361
-samples, so it's nearly balanced now.
----
-
-.center[
-![:scale 100%](images/edited_condensed_nn.png)
-]
-
-???
-Here's an illustration on the synthetic dataset. So
-basically, the edited nearest neighbors took away all these
-points here, while condensed nearest neighbors do exactly
-the opposite. It doesn’t exactly keep the closest points
-because the misclassified ones are sampled at random.
-
-This is kind of nice because it reduces the dataset a lot.
-Also, this uses KNN, so if you have a very big data set,
-this might not be computationally feasible.
-
----
-
-.smaller[
-```python
-cnn_pipe = make_imb_pipeline(CondensedNearestNeighbour(), LogisticRegression())
-scores = cross_validate(cnn_pipe, X_train, y_train, cv=10,
-                        scoring=('roc_auc', 'average_precision'))
-pd.DataFrame(scores)[['test_roc_auc', 'test_average_precision']].mean()
-# baseline was 0.920, 0.630
-```
-```
-test_roc_auc              0.920
-test_average_precision    0.606
-```
-```python
-cnn_pipe_rf = make_imb_pipeline(CondensedNearestNeighbour(),
-                                RandomForestClassifier())
-scores = cross_validate(cnn_pipe_rf, X_train, y_train, cv=10,
-                        scoring=('roc_auc', 'average_precision'))
-pd.DataFrame(scores)[['test_roc_auc', 'test_average_precision']].mean()
-# baseline was 0.939, 0.722
-```
-```
-test_roc_auc              0.953
-test_average_precision    0.701
-```
-]
-???
-If you’re unlucky doing this condensing might actually be
-more expensive than your classifier.
-
-These strategies are usually not used by themselves as much,
-but they're used together with the method we're going to
-talk about next, which is basically a way to do synthetic
-sample generation.
----
-class: center, middle
-
 ## Synthetic Sample Generation
 
 ???
@@ -1201,7 +1463,7 @@ class: spacious
 
 # Summary
 
-- Always check roc_auc an AP, look at curves
+- Always check roc_auc and AP, look at curves
 - Undersampling is very fast and can help!
 - Undersampling + Ensembles worth a try.
 - Many smart sampling strategies, mixed outcomes

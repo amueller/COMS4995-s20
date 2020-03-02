@@ -31,11 +31,13 @@ Today we’ll talk about working with imbalanced data. We
 already talked about how accuracy is a bad measure and what
 are the other measures we can use.
 
+FIXME bullet points!!
 FIXME: add example of calibrated and
 inaccurate vs accurate but not calibrated! (always saying 50% is calibrated)
 FIXME: brier score decomposition
 FIXME calibration scores
 FIXME maybe saying "sort" before binning is confusing?
+FIXME maybe add why I don't like log loss here?
 
 FIXME update metrics slides from metrics lecture
 FIXME better illustration for sampling
@@ -47,6 +49,7 @@ FIXME show grid-search results
 FIXME grid-search SMOTE show uncertainty
 FIXME research comparison papers more
 FIXME smote: clarify to only sample from same class
+FIXME smote: paper vs implementation: do along coordinates in rectangle?
 ---
 class:spacious
 #Calibration
@@ -668,23 +671,30 @@ account the asymmetric costs, or asymmetric data.
 ```python
 from sklearn.datasets import fetch_openml
 # mammography https://www.openml.org/d/310
-data = fetch_openml('mammography')
+data = fetch_openml('mammography', as_frame=True)
 X, y = data.data, data.target
-y = (y.astype(np.int) + 1) // 2
 X.shape
 ```
 (11183, 6)
 ```python
-np.bincount(y)
+y.value_counts()
 ```
 ```
-array([10923,   260])
+-1    10923
+1       260
 ```
 ]
 .right-column[
 .center[
 ![:scale 100%](images/mammography_data.png)
 ]
+]
+.reset-column[
+```python
+# make y boolean
+# this allows sklearn to determine the positive class more easily
+X_train, X_test, y_train, y_test = train_test_split(X, y == '1', random_state=0)
+```
 ]
 ]
 ???
@@ -698,7 +708,6 @@ for cancer, which is why it's good to detect them. Since its
 rigidly low dimensional, we can do a scatter plot. And we
 can see that these are much skewed distributions and there's
 really a lot more of one class than the other.
-
 
 ---
 # Mammography Data
@@ -1323,8 +1332,7 @@ There are many methods, but the only method that your
 interviewer will expect you to know is SMOTE.
 ---
 
-# Synthetic Minority Oversampling Technique
-# (SMOTE)
+# Synthetic Minority Oversampling Technique (SMOTE)
 
 - Adds synthetic interpolated data to smaller class
 - For each sample in minority class:</br>
@@ -1356,14 +1364,6 @@ two.
 - Leads to very large datasets (oversampling)
 - Can be combined with undersampling strategies
 
----
-
-.center[
-![:scale 100%](images/smote.png)
-]
-
-???
-So you oversample basically until the classes are balanced.
 ---
 
 class: center, middle

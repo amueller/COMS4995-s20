@@ -34,11 +34,11 @@ of other Python libraries that help doing these two things.
 FIXME random forest code is confusing because I tried to
 simplify it. Also: we haven't seen those yet?!
 
+FIXME explain when and how to interpret coeffients
 FIXME mutual information needs better explanation
 FIXME lasso show random between correlated, same for tree, compare to RF
 FIXME IceBOX example with cross?
 FIXME should be two lectures really!
-FIXME correlation matrix for toy data color bar
 FIXME maybe drop shap and shaply
 FIXME better explanation for ice-box and partial dependence
 FIXME partial dependence definitely needs a process diagram
@@ -126,8 +126,6 @@ def permutation_importance(est, X, y, n_bootstrap=100):
 
 - Applied on validation set given trained estimator.
 - Also kinda slow.
-- Implementation: ELI5,<br> https://github.com/scikit-learn/scikit-learn/pull/13146
-- For RF: https://github.com/parrt/random-forest-importances (uses oob)
 ---
 # LIME
 .smaller[

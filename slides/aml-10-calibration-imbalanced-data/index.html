@@ -332,13 +332,13 @@ calibrate it.
 - Build another model, mapping classifier probabilities to better probabilities!
 - 1d model! (or more for multi-class)
 
-`$$ f_{callib}(s(x)) \approx p(y)$$`
+`$$ f_{calib}(s(x)) \approx p(y)$$`
 
 
 
 - s(x) is score given by model, usually
 - Can also work with models that don’t even provide probabilities!
-Need model for $f_{callib}$, need to decide what data to train it on.
+Need model for $f_{calib}$, need to decide what data to train it on.
 - Can train on training set → Overfit
 - Can train using cross-validation → use data, slower
 
@@ -367,7 +367,7 @@ cross-validation again.
 
 # Platt Scaling
 
-- Use a logistic sigmoid for $f_{callib}$
+- Use a logistic sigmoid for $f_{calib}$
 - Basically learning a 1d logistic regression
 - (+ some tricks)
 - Works well for SVMs
@@ -390,7 +390,7 @@ lot that you can tune.
 ---
 # Isotonic Regression
 
-- Very flexible way to specify $f_{callib}$
+- Very flexible way to specify $f_{calib}$
 - Learns arbitrary monotonically increasing step-functions in 1d.
 - Groups data into constant parts, steps in between.
 - Optimum monotone function on training data (wrt mse).
@@ -461,7 +461,7 @@ cal_rf_iso.fit(X_val, y_val)
 scores_iso = cal_rf_iso.predict_proba(X_test)[:, 1]
 ```]
 
-.center[![:scale 90%](images/types_callib.png)]
+.center[![:scale 90%](images/types_calib.png)]
 
 ???
 This is for a random forest again. It can use calibrated
@@ -499,7 +499,7 @@ cal_rf_iso_cv.fit(X_train, y_train)
 scores_iso_cv = cal_rf_iso_cv.predict_proba(X_test)[:, 1]
 ```
 
-.center[![:scale 90%](images/types_callib_cv.png)]
+.center[![:scale 90%](images/types_calib_cv.png)]
 
 ???
 So we can also not specify CV, then it uses

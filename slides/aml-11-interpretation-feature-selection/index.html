@@ -31,9 +31,12 @@ of other Python libraries that help doing these two things.
 
 
 
-FIXME random forest code is confusing because I tried to
-simplify it. Also: we haven't seen those yet?!
+FIXME random forest code is confusing because I tried to simplify it. Also: we haven't seen those yet?!
 
+FIXME use / explain permutation importance
+FIXME describe plot_partial_dependence better?
+
+FIXME add diagram for permutation importance
 FIXME explain when and how to interpret coeffients
 FIXME mutual information needs better explanation
 FIXME lasso show random between correlated, same for tree, compare to RF
@@ -42,6 +45,8 @@ FIXME should be two lectures really!
 FIXME maybe drop shap and shaply
 FIXME better explanation for ice-box and partial dependence
 FIXME partial dependence definitely needs a process diagram
+FIXME remove boston
+FIXME icebox do real simpsons paradox example
 
 
 ---
@@ -63,10 +68,6 @@ Caveat: if your model is bad, interpreting it makes no sense!
 ---
 # Types of explanations
 
-## Explain "kind of model"
-- How would the model change if this feature was dropped?
-- Doesn't explain this particular fitted model
-
 ##Explain model globally
 - How does the output depend on the input?
 - Often: some form of marginals
@@ -80,6 +81,12 @@ Caveat: if your model is bad, interpreting it makes no sense!
 ???
 Marginals: how does the prediction change as function of a particular Features?
 ---
+class: spacious
+# Explaning the model $\neq$ explaining the data
+
+- model inspection only tells you about the model
+- the model might not accurately reflect the data
+---
 # "Features important to the model"?
 
 Naive:
@@ -88,8 +95,17 @@ Naive:
 
 Use with care!
 ---
+# Linear Model coefficients
+- Relative importance only meaningful after scaling
+- Correlation among features might make coefficients completely uninterpretable
+- L1 regularization will pick one at random from a correlated group
+- Any penalty will invalidate usual interpretation of linear coefficients
+---
 # Drop Feature Importance
 
+`$$I_i^\text{drop} = \text{Acc}(f, X, y) - \text{Acc}(f', X_{-i}, y)$$`
+
+.smallest[
 ```python
 def drop_feature_importance(est, X, y):
     base_score = np.mean(cross_val_score(est, X, y))
@@ -101,15 +117,21 @@ def drop_feature_importance(est, X, y):
         this_score = np.mean(cross_val_score(est, X_new, y))
         scores.append(base_score - this_score)
     return np.array(scores)
-```
+```]
+.smallest[
+- Doesn't really explain model (refits for each feature)
 - Can't deal with correlated features well
 - Very slow
+- Can be used for feature selection
+]
 ???
 on it's own not very useful, we'll see it later
 rebuilds many models, not explaining this particular model!
 ---
 # Permutation importance
 Idea: measure marginal influence of one feature
+
+`$$I_i^\text{perm} = \text{Acc}(f, X, y) - \mathbb{E}_{x_i}\left[\text{Acc}(f(x_i, X_{-i}), y)\right]$$`
 
 ```python
 def permutation_importance(est, X, y, n_bootstrap=100):
@@ -151,15 +173,6 @@ def permutation_importance(est, X, y, n_bootstrap=100):
 class: middle
 
 # Case Study
----
-# Side-note: CV Estimators
-
-- Exist for most linear models, i.e. RidgeCV, LogisticRegressionCV
-- perform efficient cross validation by exploiting algorithm properties (often warm-starting)
-- have build-in parameter grids
-- are a bit weird with pipelines
-???
-FIXME add small code example
 ---
 # Toy data
 ```python
@@ -376,29 +389,30 @@ small part petal length, medium peddling for versicolor and
 large for virginca. These are all put through logistic
 function and then normalized.
 ---
-
+# PDP Caveats
+.left-column[
+![:scale 100%](images/pdp_failure.png)
+]
+--
+.right-column[
+![:scale 100%](images/pdp_failure_data.png)
+]
+---
+class:compact
 # Ice Box
 .smaller[
 - like partial dependence plots, without the `.mean(axis=0)`
-- looks cool. maybe useful.
+]
+
+.center[
+![:scale 60%](images/ice_cross.png)
+]
+.tiny[
 - https://pdpbox.readthedocs.io/en/latest/
-]
-.center[
-![:scale 60%](images/ice_lstat.png)
-]
-
----
-# Ice Box
-.smaller[
-- Another one: PyCEBOX
 - https://github.com/AustinRochford/PyCEbox
+- https://github.com/scikit-learn/scikit-learn/pull/16164
 ]
-.center[
-![:scale 80%](images/boston_ice.png)
-]
-
 ---
-
 
 class: center, middle
 
@@ -1143,9 +1157,6 @@ with the same number of features will the same happen? They
 both are sort of one step look ahead approximations to
 trying out all subsets and there's no guarantee we would get
 the same thing.
-
-
----
 
     </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>

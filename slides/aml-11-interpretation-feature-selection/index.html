@@ -47,7 +47,7 @@ FIXME better explanation for ice-box and partial dependence
 FIXME partial dependence definitely needs a process diagram
 FIXME remove boston
 FIXME icebox do real simpsons paradox example
-
+FIXME unsupervised feature selection terrible?
 
 ---
 class: spacious
@@ -248,22 +248,34 @@ class: middle
 ---
 
 # Partial Dependence Plots
-- Marginal dependence of prediction on one or two features
+- Marginal dependence of prediction on one (or two features)
 
-.smaller[
+`$$f_i^{\text{pdp}}(x_i) = \mathbb{E}_{X_{-i}}\left[f(x_i, x_{-i})\right]$$`
+
+- Idea: Get marginal predictions given feature.
+- How? "integrate out" other features using validation data
+- Fast methods available for tree-based models (doesn't require validation data)
+- Nonsensical for linear models.
+
+---
+class: compact
+# Partial Dependence
+.tiny[
 ```python
 from sklearn.ensemble.partial_dependence import plot_partial_dependence
 boston = load_boston()
-X_train, X_test, y_train, y_test = train_test_split(
-    boston.data, boston.target,random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(boston.data, boston.target,random_state=0)
 
 gbrt = GradientBoostingRegressor().fit(X_train, y_train)
 
-fig, axs = plot_partial_dependence(
-    gbrt, X_train, np.argsort(gbrt.feature_importances_)[-6:],
-    feature_names=boston.feature_names, n_jobs=3,
-    grid_resolution=50)
+fig, axs = plot_partial_dependence(gbrt, X_train, np.argsort(gbrt.feature_importances_)[-6:], feature_names=boston.feature_names)
 ```
+]
+
+--
+
+.center[
+![:scale 60%](images/feat_impo_part_dep.png)
 ]
 
 ???
@@ -283,14 +295,6 @@ So here, I'm looking at the six most important features. The
 feature importance is important according to the trees. So I
 sort this and take the six most important ones.
 
----
-# Partial Dependence Plots
-
-.center[
-![:scale 70%](images/feat_impo_part_dep.png)
-]
-
-???
 And so this is what the partner dependence plots look like.
 So this is the most important feature, the second most
 important feature and so on. This is sort of the marginal
@@ -321,16 +325,6 @@ feature influences it. Unfortunately, it’s not available in
 scikit-learn. You could do the same thing for random
 forests. Because in the end, the way they predict is quite
 similar.
----
-# Partial Dependence
-- Idea: Get marginal predictions given feature.
-- How? "integrate out" other features using validation data
-- Fast methods available for trees!
-- Nonsensical for linear models.
-- sklearn master: only gradient boosting
-- Next sklearn: fast for gradient boosting, slow for everything else
-- future: fast for all tree-based models
-
 ---
 # Bivariate Partial Dependence Plots
 .smaller[

@@ -30,11 +30,12 @@ and how to doit with scikit-learn. We're also going to look into a couple
 of other Python libraries that help doing these two things.
 
 
-
+FIXME motivation for model interpretation!
 FIXME random forest code is confusing because I tried to simplify it. Also: we haven't seen those yet?!
 
 FIXME use / explain permutation importance
-FIXME describe plot_partial_dependence better?
+
+FIXME use seaborn clustermap for correlation matrix plot
 
 FIXME add diagram for permutation importance
 FIXME explain when and how to interpret coeffients
@@ -48,6 +49,7 @@ FIXME partial dependence definitely needs a process diagram
 FIXME remove boston
 FIXME icebox do real simpsons paradox example
 FIXME unsupervised feature selection terrible?
+FIXME why is shap in the wrong direction? Why spurious importances?
 
 ---
 class: spacious
@@ -134,14 +136,14 @@ Idea: measure marginal influence of one feature
 `$$I_i^\text{perm} = \text{Acc}(f, X, y) - \mathbb{E}_{x_i}\left[\text{Acc}(f(x_i, X_{-i}), y)\right]$$`
 
 ```python
-def permutation_importance(est, X, y, n_bootstrap=100):
+def permutation_importance(est, X, y, n_repeat=100):
   baseline_score = estimator.score(X, y)
   for f_idx in range(X.shape[1]):
-      for b_idx in range(n_bootstrap):
+      for repeat in range(n_repeat):
           X_new = X.copy()
           X_new[:, f_idx] = np.random.shuffle(X[:, f_idx])
           feature_score = estimator.score(X_new, y)
-          scores[f_idx, b_idx] = baseline_score - feature_score
+          scores[f_idx, repeat] = baseline_score - feature_score
 ```
 
 --
@@ -165,7 +167,7 @@ def permutation_importance(est, X, y, n_bootstrap=100):
 # SHAP
 - Build around idea of Shaply values
 - very roughly: does drop-out importance for every subset of features
-- intractable, sampling approximations exit
+- intractable, sampling approximations exists
 - fast variants for linear and tree-based models
 - awesome vis and tools: https://github.com/slundberg/shap
 - allows local / per sample explanations
@@ -262,7 +264,7 @@ class: compact
 # Partial Dependence
 .tiny[
 ```python
-from sklearn.ensemble.partial_dependence import plot_partial_dependence
+from sklearn.inspection import plot_partial_dependence
 boston = load_boston()
 X_train, X_test, y_train, y_test = train_test_split(boston.data, boston.target,random_state=0)
 
@@ -358,7 +360,7 @@ very hard to do. Way more tricky to do in neural networks.
 # Partial Dependence for Classification
 .tiny-code[
 ```python
-from sklearn.ensemble.partial_dependence import plot_partial_dependence
+from sklearn.inspection import plot_partial_dependence
 for i in range(3):
     fig, axs = plot_partial_dependence(gbrt, X_train, range(4), n_cols=4,
                                        feature_names=iris.feature_names, grid_resolution=50, label=i)

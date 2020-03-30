@@ -24,6 +24,9 @@ class: center, middle
 Andreas C. Müller
 
 ???
+FIXME successive halving and hyperband explaination with budget is too confusing, don't need it
+FIXME add neural networks to meta-model
+FIXME bullet points
 FIXME show figure 2x random is as good as hyperband?
 FIXME needs lots more polish!
 FIXME too long?! what?! how?!
@@ -73,7 +76,6 @@ param_dist = {"max_depth": [3, None],
               "min_samples_split": randint(2, 11),
               "bootstrap": [True, False],
               "criterion": ["gini", "entropy"]}
-n_iter_search = 20
 random_search = RandomizedSearchCV(clf,
                                    param_distributions=param_dist,
                                    n_iter=200)

@@ -25,13 +25,13 @@ Andreas C. Müller
 
 ???
 Today we're gonna talk about clustering and mixture models,
-mostly clustering algorithms. Next time we'll talk about
-evaluation of clustering.
+mostly clustering algorithms.
 
+FIXME: 'real world' examples? Usecases, better motivation?
 FIXME: illustration of Kmeans++
 FIXME: linkage explanation diagram
-FIXME: cluster sized in particularly good for dbscan
-debugging
+FIXME: cluster sized in particularly good for dbscan (what did I mean?)
+debugging (what did I mean?!)
 ---
 
 class: center, middle
@@ -144,24 +144,6 @@ might still get something out of the clustering.
 - Data Exploration
   - Are there coherent groups ?
   - How many groups are there ?
-
---
-
-- Data Partitioning
-  - Divide data by group before further processing
-
---
-
-- Unsupervised feature extraction
-  - Derive features from clusters or cluster distances
-
---
-
-- Evaluation and parameter tuning
-  - Quantitative measures of limited use
-  - Usually qualitative measures used
-  - Best: downstream tasks
-  - What is your goal?
 ???
 So why would we want to use a clustering algorithm? The
 main usage that I've come across is exporation of the data
@@ -177,7 +159,17 @@ say, a linear model, to each cluster. That would create a
 more powerfull model than just learning a linear model on
 the whole dataset.
 
+--
 
+- Data Partitioning
+  - Divide data by group before further processing
+
+--
+
+- Unsupervised feature extraction
+  - Derive features from clusters or cluster distances
+
+???
 Another use is unsupervised feature extraction. You can also
 use clustering to derive a different representation of the
 data.
@@ -185,6 +177,17 @@ data.
 An often cited application of clustering is customer
 segmentation, though I'd say data exploration or feature
 extraction are more common.
+
+
+--
+
+- Evaluation and parameter tuning
+  - Quantitative measures of limited use
+  - Usually qualitative measures used
+  - Best: downstream tasks
+  - What is your goal?
+???
+
 ---
 
 class: center, middle
@@ -999,6 +1002,7 @@ FIXME add epsilon circles to points?
 - Pro: Can learn arbitrary cluster shapes
 - Pro: Can detect outliers
 - Con: Needs two (non-obvious?) parameters to adjust
+- Improved version: HDBSCAN
 
 .center[
 ![:scale 50%](images/dbscan_pro_con.png)

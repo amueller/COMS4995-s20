@@ -782,9 +782,9 @@ the importance.
 - Can split on categorical data directly
 - Intuitive way to split: split in two subsets
 - 2 ^ n_values many possibilities
-- Possible to do in linear time exactly for gini index and binary classification.
+- Possible to do in O(n_values . log(n_values)) exactly for gini index and binary classification.
 - Heuristics done in practice for multi-class.
-- Not in sklearn :(
+- Not in sklearn yet
 
 ???
 You can use categorical data in trees, and you can do this

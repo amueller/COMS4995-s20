@@ -27,9 +27,7 @@ Andreas C. Müller
 Today, we'll talk about working with text data.
 
 FIXME explain L2 normalization and intuition?
-FIXME bad resolution in some plots
-FIXME mention NLTK, spacy, gensim
-FIXME move pro's and cons of hashing vectorizer before the example?
+FIXME BOW figure needs repainting
 ---
 
 # More kinds of data
@@ -1833,6 +1831,45 @@ So I don't need to build a vocabulary which is pretty nice.
 
 
 ---
+
+# Trade-offs
+
+.left-column[
+Pro:
+- Fast
+- Works for streaming data
+- Low memory footprint
+]
+.right-column[
+Con:
+- Can't interpret results
+- Hard to debug
+- (collisions are not a problem for model accuracy)
+
+]
+???
+Here are pros and cons listed.
+
+It's hard to interpret the results because now you have like
+a feature vector of size million, but you don't know what
+the features correspond to. Previously we had a vocabulary
+and we could say feature 3 corresponds to X and now we don't
+know what it is.
+
+You could try to store the correspondences but that would
+sort of remove all the benefits. So that makes it kind of
+hard to debug.
+
+There can be hash collisions, which make it harder to
+interpret. 2 tokens can hash to the same index. In practice,
+that's not really a problem for accuracy. But it's a problem
+for interpretability because you can't undo the hash
+function so you don't know why your model learned the thing
+it learned. But if you have really big text data or
+streaming setting, this is a quite simple and effective
+method.
+
+---
 # Near drop-in replacement
 .smallest[
 - Careful: Uses l2 normalization by default!
@@ -1875,44 +1912,16 @@ The result was about the same. It can be faster, and you get
 away without storing the vocabulary
 
 ---
+# Other libraries
 
-# Trade-offs
+## [nltk](https://www.nltk.org/)
+- Classic, comprehensiv, slightly outdated
 
-.left-column[
-Pro:
-- Fast
-- Works for streaming data
-- Low memory footprint
-]
-.right-column[
-Con:
-- Can't interpret results
-- Hard to debug
-- (collisions are not a problem for model accuracy)
+## [spaCy](https://spacy.io/)
+- recommended; modern, fast; API still changing in parts.
 
-]
-???
-Here are pros and cons listed.
-
-It's hard to interpret the results because now you have like
-a feature vector of size million, but you don't know what
-the features correspond to. Previously we had a vocabulary
-and we could say feature 3 corresponds to X and now we don't
-know what it is.
-
-You could try to store the correspondences but that would
-sort of remove all the benefits. So that makes it kind of
-hard to debug.
-
-There can be hash collisions, which make it harder to
-interpret. 2 tokens can hash to the same index. In practice,
-that's not really a problem for accuracy. But it's a problem
-for interpretability because you can't undo the hash
-function so you don't know why your model learned the thing
-it learned. But if you have really big text data or
-streaming setting, this is a quite simple and effective
-method.
-
+## [gensim](https://radimrehurek.com/gensim/)
+- focus on topic modeling
 
 
 ---

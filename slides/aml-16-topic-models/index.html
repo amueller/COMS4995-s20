@@ -24,12 +24,12 @@ class: center, middle
 Andreas C. Müller
 
 ???
-Today, I'm going to talk about LSA and topic models, LSA is
-Latent Semantic Analysis. The overarching theme is
-extracting information from text corpuses in an unsupervised
-way.
+Today, I'm going to talk about Latent Semantic Analysis and topic models, and a bit of Non-negative matrix factorization.
+The overarching theme is extracting information from text corpuses in an
+unsupervised way.
 
 FIXME How to apply LDA (and NMF?) to test-data
+FIXME WHY / How
 FIXME steal from Tim Hoppers talk!! https://www.youtube.com/watch?v=_R66X_udxZQ
 FIXME do MCMC LDA (code)?
 FIXME explain MCMC?
@@ -66,7 +66,111 @@ same problem of getting more semantically meaningful
 representations for text data.
 
 ---
+class: center, middle
 
+# Topic Models
+???
+Next, I want to talk a little bit about models that are
+somewhat more specific to the text data, or that allows us
+maybe to interpret the text data a little bit more clearly.
+
+The idea of topic models is basically that each document is
+created as a mixture of topics. Each topic is a distribution
+over words. And we want to learn the topics that are
+relevant to our corpus and which of these topics contribute
+to each individual document.
+
+Topics could be the genre of movie, or the sentiment, or the
+comment writer sophistication, or whether English is their
+native language or so on. And so each of them is would be
+topics. So the topic is not necessarily sorted of semantic
+topic, but something that influences the choice of
+vocabulary for a given document.
+
+For each document, you assume that several of these topics
+are active and others are not and they have very varying
+importance. So movies could be mixtures of different genres
+and then they could have words from multiple genres.
+
+---
+class: spacious
+
+# Motivation
+
+- Each document is created as a mixture of topics
+- Topics are distributions over words
+- Learn topics and composition of documents simultaneously
+- Unsupervised (and possibly ill-defined)
+???
+This is an unsupervised task, so it’s probably ill-defined
+and so results are open to interpretation, and also depend
+on how exactly you formulate the task.
+---
+#Matrix Factorization
+
+<br>
+
+.center[
+![:scale 80%](images/matrix_factorization.png)
+]
+
+???
+So matrix factorization algorithm works like this. We have
+our data matrix, X, which is number of samples times number
+of features. And we want to factor it into two matrices, A
+and B.
+
+A is number of samples times k and B is k times number of
+features.
+
+If we do this in some way, we get for each sample, a new
+representation in k-dimensional, each row of k will
+correspond to one sample and the columns of B will
+correspond to the input features. So they encode how the
+entries of A correspond to the original data. Often this is
+called latent representation. So, these new features here in
+A, somehow represent the rows of X and the features are
+encoded in B.
+
+---
+#Matrix Factorization
+
+<br>
+
+.center[
+![:scale 80%](images/matrix_factorization_2.png)
+]
+sklearn speak: `A = mf.transform(X)`
+
+???
+---
+
+#PCA
+
+<br>
+
+.center[
+![:scale 80%](images/pca.png)
+]
+???
+The one example of this that we already saw is principal
+component analysis. In PCA, B was basically the rotation and
+then a projection. And A is just the  projection of X.
+
+This is just one particular factorization you can do. I have
+the sign equal, but usually, more generally, you're trying
+to find matrixes A and B so that this is as close to equal
+as possible.
+
+In particular, for PCA, what we're trying to do is we try to
+find matrices A and B so that the rows of B are orthogonal,
+and we restrict the rank of k. K would be the number of
+components and we get PCA, if we restrict the columns of B
+to be orthogonal, then the product of matrixes A and B is
+most close to X in the least square sense is the principal
+component analysis.
+
+---
 # Latent Semantic Analysis (LSA)
 
 - Reduce dimensionality of data.
@@ -316,46 +420,6 @@ dimensional representation.
 
 
 ---
-class: center, middle
-
-# Topic Models
-???
-Next, I want to talk a little bit about models that are
-somewhat more specific to the text data, or that allows us
-maybe to interpret the text data a little bit more clearly.
-
-The idea of topic models is basically that each document is
-created as a mixture of topics. Each topic is a distribution
-over words. And we want to learn the topics that are
-relevant to our corpus and which of these topics contribute
-to each individual document.
-
-Topics could be the genre of movie, or the sentiment, or the
-comment writer sophistication, or whether English is their
-native language or so on. And so each of them is would be
-topics. So the topic is not necessarily sorted of semantic
-topic, but something that influences the choice of
-vocabulary for a given document.
-
-For each document, you assume that several of these topics
-are active and others are not and they have very varying
-importance. So movies could be mixtures of different genres
-and then they could have words from multiple genres.
-
----
-class: spacious
-
-# Motivation
-
-- Each document is created as a mixture of topics
-- Topics are distributions over words
-- Learn topics and composition of documents simultaneously
-- Unsupervised (and possibly ill-defined)
-???
-This is an unsupervised task, so it’s probably ill-defined
-and so results are open to interpretation, and also depend
-on how exactly you formulate the task.
----
 
 # NMF for topic models
 
@@ -372,19 +436,34 @@ represents the weights.
 
 
 ---
-# NMF objectives
+class: compact
+
 # NMF Loss and algorithm
 
 Frobenius loss / squared loss ($ Y = H W$):
 
-`$$\large l_{\text{frob}}(X, Y) = ||X - Y||_{\mathrm{Fro}}^2 = \sum_{i,j} (X_{ij} - Y_{ij})^ 2$$`
+`$$ l_{\text{frob}}(X, Y) = \sum_{i,j} (X_{ij} - Y_{ij})^ 2$$`
 
 Kulback-Leibler (KL) divergence:
-`$$\large l_{\text{KL}}(X, Y) = \sum_{i,j} X_{ij} \log\left(\frac{X_{ij}}{Y_{ij}}\right) - X_{ij}  + Y_{ij}$$`
+`$$ l_{\text{KL}}(X, Y) = \sum_{i,j} X_{ij} \log\left(\frac{X_{ij}}{Y_{ij}}\right) - X_{ij}  + Y_{ij}$$`
+
+s.t. H, W all entries positive
+--
+
+optimization :
+- Convex in either W or H, not both.
+- Randomly initialize (PCA?)
+- Iteratively update W and H (block coordinate descent)
+
+--
+
+Transforming data:
+
+- Given new data `X_test`, fixed `W`, computing `H` requires optimization.
+???
+In literature: often everything transposed
 
 ???
-There are 2 possible objectives NMF can minimize, you pick one of the two.
-
 You want X to be close to HxW, that’s the whole goal. There
 are 2 common ways in which people measure this.
 
@@ -898,9 +977,9 @@ Blei all the time.
 	* Stochastic Variational Inference
 	* SVI allows online learning (partial_fit)
 
-- Edward by Dustin Tran: http://edwardlib.org/
+- Tensorflow Probability https://www.tensorflow.org/probability
   * Tensor-flow based framework for stochastic variational inference.
-  * Now Tensorflow Probability: https://www.tensorflow.org/probability
+  * Used to be Edward by Dustin Tran (Blei Lab)
 
 ???
 Pick a solver depending on the amount of the documents you

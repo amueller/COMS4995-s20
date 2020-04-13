@@ -37,7 +37,6 @@ FIXME: word embeddings with tensorflow?
 FIXME for CBOW and skip-gram shared weights for context
 FIXME for CBOW, which do we keep?
 FIXME SGDClassifier screenshots
-FIXME so much time on gensim, maybe more time on spacy instead?
 FIXME steal from http://mccormickml.com/2016/04/19/word2vec-tutorial-the-skip-gram-model/ ?
 FIXME the way I do the word vectors is confusing (using inverse_transform)
 FIXME run through complete code for word vectors, how to deal with out-of-vocabulary words
@@ -296,161 +295,53 @@ download several of these word2vec models from Google, for
 example.
 
 ---
+# Quick intro to spaCy
+Comes with pretrained models, we'll need the "large model":
+```
+python -m spacy download en_core_web_lg
+```
+
+```python
+import spacy
+nlp = spacy.load("en_core_web_lg")
+doc = nlp("What is my purpose?")
+for token in doc:
+    print(token.text, token.lemma_, token.pos_, token.tag_,
+          token.dep_, token.shape_, token.is_alpha, token.is_stop)
+```
+```
+What what NOUN WP attr Xxxx True False
+is be VERB VBZ ROOT xx True False
+my -PRON- ADJ PRP$ poss xx True False
+purpose purpose NOUN NN nsubj xxxx True False
+? ? PUNCT . punct ? False False
+
+```
+---
 class: spacious
 
-# Gensim - topic models for humans
-
-- Multiple Latent Dirichlet Allocation implementations
-- Wrappers for Mallet and vopal wabbit
-- Tools for analyzing topic models
-- No supervised learning
-- Uses list-of-tuples instead of sparse matrices to
-store documents.
-
-???
-Gensim is a Python library for text analysis. Gensim is very
-easy to use and it has a lot of features. Last time, I
-mentioned spacy and NLTK as libraries for NLP, Gensim is the
-third one in that list which is very specific to topic
-models. And it has multiple implementations of LDA. It has
-wrappers for Mallet and vowpal wabbit, which also has very
-fast on LDA implementation. It has no supervised learning.
-This is all about document retrieval and feature extraction.
-
-
-The main thing to keep in mind when you work with this and
-when you combine this with scikit-learn is that it uses a
-list of tuples to store documents instead of sparse
-matrices. It's completely equivalent. It's just a different
-data structure. But if you want to mix this with
-scikit-learn, you need to make sure to convert it.
-
----
-# Introduction to gensim
-
-.smallest[
+# Word2Vec with spaCy
 ```python
-docs = ["What is my purpose", "You bring butter"]
-texts = [[token for token in doc.lower().split()] for doc in docs]
-print(texts)
+doc = nlp("What is my purpose?")
+for token in doc:
+    print(token.text, token.has_vector, token.vector.shape)
+
 ```
 ```
-[['what', 'is', 'my', 'purpose'], ['you', 'bring', 'butter']]
+What True (300,)
+is True (300,)
+my True (300,)
+purpose True (300,)
+? True (300,)
 ```
 ```python
-from gensim import corpora
-dictionary = corpora.Dictionary(texts)
-print(dictionary)
+nlp.vocab.vectors.shape
 ```
 ```
-Dictionary(7 unique tokens: ['butter', 'you', 'is', 'purpose', 'my']...)
-```
-```python
-new_doc = "what butter"
-dictionary.doc2bow(new_doc.lower().split())
-```
-```
-[(3, 1), (5, 1)]
-```
-```python
-corpus = [dictionary.doc2bow(text) for text in texts]
-corpus
-```
-```
-[[(0, 1), (1, 1), (2, 1), (3, 1)], [(4, 1), (5, 1), (6, 1)]]
-```
-]
+(684831, 300)
 
-???
-
-Use NLTK or spacy or a regexp for tokenization in real
-applications. This method here doesn’t even handle
-punctuation.
-In gensim, a document is represented as list of tuples
-(index, frequency), corpus is a list of these.
-
----
-
-# Converting to/from sparse matrix
-
-.smallest[
-```python
-import gensim
-corpus
-```
-```
-[[(0, 1), (1, 1), (2, 1), (3, 1)], [(4, 1), (5, 1), (6, 1)]]
-```
-```python
-gensim.matutils.corpus2csc(corpus)
-```
-```
-<7x2 sparse matrix of type '<class 'numpy.float64'>'
-  with 7 stored elements in Compressed Sparse Column format>
-```
-```python
-X = CountVectorizer().fit_transform(docs)
-X
-```
-```python
-sparse_corpus = gensim.matutils.Sparse2Corpus(X.T)
-print(sparse_corpus)
-print(list(sparse_corpus))
-```
-```
-<gensim.matutils.Sparse2Corpus object at 0x7fd6d776b438>
-[[(4, 1), (3, 1), (2, 1), (5, 1)], [(1, 1), (0, 1), (6, 1)]]
-```
-]
-
-???
-most transformations is gensim are lazy:
-They yield a generator (like Sparse2Corpus) which can
-be converted to a list.
-Note that the CSC is transposed to what we would expect in sklearn.
-
----
-# Corpus Transformations
-
-.smaller[
-```python
-tfidf = gensim.models.TfidfModel(corpus)
-tfidf[corpus[0]]
-```
-```
-[(0, 0.5), (1, 0.5), (2, 0.5), (3, 0.5)]
-```
-```python
-print(tfidf[corpus])
-print(list(tfidf[corpus]))
-```
-```
-<gensim.interfaces.TransformedCorpus object at 0x7fd6d776b2b0>
-[[(0, 0.5), (1, 0.5), (2, 0.5), (3, 0.5)], [(4, 0.577), (5, 0.577), (6, 0.577)]]
 ```
 
-]
-???
-You can do a TFIDF model with Gensim.
----
-
-# Word2Vec in Gensim
-
-```python
-from gensim import models
-w = models.KeyedVectors.load_word2vec_format(
-    '../GoogleNews-vectors-negative300.bin', binary=True)
-w['queen'].shape
-```
-```
-(300,)
-```
-```python
-w.vectors.shape
-```
-```
-(3000000, 300)
-```
 ???
 There are 2 benefits to using these prebuilt models.
 A)  It takes a long time to run to train these
@@ -488,18 +379,30 @@ this might be quite intuitive, since it just sort of
 normalizes the length of document away.
 
 ---
-class: smallerr
+class: smaller
 # Inspecting Semantics
+
 ```python
-w.most_similar(positive=['movie'], topn=5)
+queries = [w for w in nlp.vocab if w.is_lower and w.prob >= -15]
+
+def most_similar(word, count=10):
+    by_similarity = sorted(queries, key=lambda w: word.similarity(w), reverse=True)
+    return [w.orth_ for w in by_similarity[:count]]
+
+most_similar(nlp("movie"))
 ```
 
 ```
-[('film', 0.867),
- ('movies', 0.801),
- ('films', 0.736),
- ('moive', 0.683),
- ('Movie', 0.669)]
+['movie',
+ 'movies',
+ 'film',
+ 'films',
+ 'flick',
+ 'starring',
+ 'soundtrack',
+ 'trailer',
+ 'cinema',
+ 'remake']
 ```
 ???
 Now that we know how we can measure similarities in the
@@ -515,8 +418,9 @@ gives the 5 closest one. In this case, they are ‘film’,
 common misspelling.
 
 ---
+class: smaller
 ```python
-w.most_similar(positive=['good'], topn=5)
+most_similar(nlp("good"), count=15)
 ```
 ???
 Trying the same for the word ‘good’ gives ‘great’, ‘bad’,
@@ -525,29 +429,37 @@ synonym for ‘good’, this makes sense since sometimes if we
 replace ‘good’ with ‘bad’, it will still make sense.
 --
 ```
-[('great', 0.729),
- ('bad', 0.719),
- ('terrific', 0.688),
- ('decent', 0.683),
- ('nice', 0.683)]
- ```
+['good', 'great', 'better', 'very', 'nice', 'really', 'excellent', 'decent',
+'well', 'but', 'much', 'too', 'bad', 'enough', 'kind']
+```
 --
 ```python
-w.most_similar(positive=['cute', 'dog'], topn=5)
+most_similar(nlp("cute dog"))
 ```
 ```
-[('puppy', 0.764),
- ('chihuahua', 0.720),
- ('adorable_puppy', 0.710),
- ('yorkie', 0.701),
- ('Shitzu', 0.700)]
- ```
+['cute', 'dog', 'adorable', 'puppy', 'cat', 'kitty', 'dogs', 'kitten', 'bunny',
+'pet']
+```
+--
+```python
+doc = nlp("cute dog")
+doc.vector.shape
+```
+```
+(300,)
+```
+```python
+np.all(doc.vector == (nlp("cute").vector + nlp("dog").vector) / 2)
+```
+```
+True
+```
 
 ???
 You can also look at multiple vectors and take the average
 and then look what's close to that. I’ve computed for ‘cute’
 and ‘dog’.
- ---
+---
 
 # Prepare document (IMDB)
 
@@ -568,27 +480,14 @@ I liked this one a lot. Do NOT watch whilst eating pudding.
 ```
 
 ```python
-vect_w2v = CountVectorizer(vocabulary=w.index2word)
-vect_w2v.fit(text_train_sub)
-docs = vect_w2v.inverse_transform(vect_w2v.transform(text_train_sub))
-docs[0]
+# skip some annotations for faster processing
+nlp = spacy.load("en_core_web_lg", disable=["tagger", "parser", "ner"])
+docs_train = [nlp(d.decode()).vector for d in text_train_sub]
+X_train = np.vstack(docs_train)
+X_train.shape
 ```
 ```
-array(['in', 'for', 'that', 'is', 'the', 'at', 'not', 'as', 'it', 'by',
-       'are', 'have', 'an', 'this', 'they', 'but', 'one', 'which', 'do',
-       'than', 'over', 'just', 'some', 'like', 'only', 'did', 'because',
-       'off', 'being', 'my', 'very', 'much', 'go', 'under', 'does', 'got',
-       'top', 'come', 'really', 'lot', 'find', 'thing', 'once', 'offer',
-       'feel', 'film', 'medical', 'terms', 'rather', 'certain', 'felt',
-       'consider', 'watch', 'parts', 'heavy', 'towards', 'enjoy',
-       'feeling', 'maybe', 'piece', 'fear', 'myself', 'stuff', 'handed',
-       'brings', 'movies', 'hospitals', 'rare', 'lots', 'skin', 'eating',
-       'intense', 'somewhat', 'liked', 'afraid', 'tribute', 'horror',
-       'revenge', 'brave', 'whilst', 'sympathy', 'assaulted', 'satisfying',
-       'hatred', 'viewer', 'awhile', 'pardon', 'delightful', 'disgust',
-       'imitation', 'pudding', 'cringe', 'jaded', 'pun', 'pangs', 'doesn',
-       'junctures', 'hellraiser', 'appologize'],
-      dtype='<U98')
+(18750, 300)
 ```
 ]
 
@@ -611,28 +510,19 @@ And the most common way to use this to represent documents
 is just using the average.
 
 ---
-# Represent doc by average
+# Classification of average vectors
 
 .smaller[
 ```python
-X_train = np.vstack([np.mean(w[doc], axis=0) for doc in docs])
-X_train.shape
-```
-```
-(18750, 300)
-```
-```python
-docs_val = vect_w2v.inverse_transform(vect_w2v.transform(text_val))
-X_val = np.vstack([np.mean(w[doc], axis=0) for doc in docs_val])
-```
-```python
-lr_w2v = LogisticRegression(C=100).fit(X_train, y_train_sub)
+lr_w2v = LogisticRegression().fit(X_train, y_train_sub)
 lr_w2v.score(X_train, y_train_sub)
 ```
 ```
 0.867
 ```
 ```python
+docs_val = [nlp(d.decode()).vector for d in text_val]
+X_val = np.vstack(docs_val)
 lr_w2v.score(X_val, y_val)
 ```
 ```
@@ -743,32 +633,33 @@ really excited.
 
 ---
 
-# Examples with Gensim
+# Examples with spaCy
 
 .smaller[
 ```python
-w.most_similar(positive=['woman', 'king'], negative=['man'], topn=3)
+def most_similar_vec(vec, count=10):
+    by_similarity = sorted(queries, key=lambda w: cos_sim(w.vector, vec), reverse=True)
+    return [w.orth_ for w in by_similarity[:count]]
+
+vec = nlp('woman').vector + nlp('king').vector - nlp("man").vector
+most_similar_vec(vec)
 ```
 ```
-[('queen', 0.711),
- ('monarch', 0.618),
- ('princess', 0.590)]
-```
-```python
-w.most_similar(positive=['woman', 'he'], negative=['man'], topn=3)
-```
-```
-[('she', 0.849),
- ('She', 0.632),
- ('her', 0.602)]
+['king', 'queen', 'prince', 'kings', 'princess', 'royal', 'throne', 'queens', 'monarch', 'kingdom']
 ```
 ```python
-w.most_similar(positive=['Germany', 'pizza'], negative=['Italy'], topn=3)
+vec = nlp('woman').vector - nlp("man").vector + nlp('he').vector 
+most_similar_vec(vec)
 ```
 ```
-[('bratwurst', 0.543),
- ('Domino_pizza', 0.513),
- ('donuts', 0.512)]
+['she', 'woman', 'he', 'her', 'herself', 'mother', 'wife', 'who', 'told', 'when']
+```
+```python
+vec = nlp('paris').vector - nlp('berlin').vector + nlp('germany').vector 
+most_similar_vec(vec)
+```
+```
+['france', 'paris', 'europe', 'germany', 'italy', 'spain', 'japan', 'european', 'poland', 'usa']
 ```
 
 ]
@@ -780,6 +671,72 @@ to ‘queen’.
 
 So relationships that are found here definitely depend a lot
 on the corpus that was used.
+---
+
+
+# GloVe: Global Vectors for Word Representation
+
+
+$X_{ij}$ = How often does work j appear in context of word i
+
+`$$ J = \sum\limits_{i,j=1}^{V} f(X_{ij}) (w_i^T \tilde{w_j} + b_i + \tilde{b_j} - \log X_{ij})^2$$`
+
+
+`$$
+f(x) =
+\begin{cases}
+  (x/x_\text{max})^\alpha & \text{if  } x < x_\text{max}  \\
+  1 & \text{otherwise} \\
+\end{cases}
+$$`
+
+.smaller[
+https://nlp.stanford.edu/projects/glove/
+]
+
+
+???
+
+Here X_ij is the coocurrance count matrix, counting
+how often word I and j appear in the same context –
+say a 5 word window.
+We are learning a factorization of log(X_ij) into w_i and
+~w_j, where w_i are the word-vectors we want to
+extract.
+Very infrequent word-pairs are less important to get
+right, and are down-weighted using f(X_ij).
+
+alpha is 3/4 empirically. x_max is 100.
+
+---
+class: center, spacious
+# GloVe  Weighting function f
+
+![:scale 90%](images/glove_weighting.png)
+???
+If you're larger than X max, it's just weighted by 1. If all
+words appear at least 100 times then the loss is weighted
+fully and if words appear less than 100 times, then you take
+x divided by 100 to the power of alpha, and they found alpha
+equal to 0.75. So it works better than linear.
+
+So in the beginning, you have to compute this big sparse
+matrix once, but then you can do gradient descent just on
+this given statistics.
+
+---
+# Word analogies
+
+.center[
+![:scale 45%](images/word_analogies.png)
+]
+
+???
+
+Comparison of CBOW, SGD, skip-gram and Glove on
+the semantic (ie. state→capital) and syntactic (ie
+singular→ plural) word analogy tasks
+
 
 
 ---
@@ -1047,308 +1004,50 @@ In the paper: they actually get 0.926%
 400 dimensions (And using unsupervised data)
 
 ---
-
-
-# GloVe: Global Vectors for Word Representation
-
-
-$X_{ij}$ = How often does work j appear in context of word i
-
-`$$ J = \sum\limits_{i,j=1}^{V} f(X_{ij}) (w_i^T \tilde{w_j} + b_i + \tilde{b_j} - \log X_{ij})^2$$`
-
-
-`$$
-f(x) =
-\begin{cases}
-  (x/x_\text{max})^\alpha & \text{if  } x < x_\text{max}  \\
-  1 & \text{otherwise} \\
-\end{cases}
-$$`
-
-.smaller[
-https://nlp.stanford.edu/projects/glove/
-]
-
-
-???
-
-Here X_ij is the coocurrance count matrix, counting
-how often word I and j appear in the same context –
-say a 5 word window.
-We are learning a factorization of log(X_ij) into w_i and
-~w_j, where w_i are the word-vectors we want to
-extract.
-Very infrequent word-pairs are less important to get
-right, and are down-weighted using f(X_ij).
-
-alpha is 3/4 empirically. x_max is 100.
-
----
-class: center, spacious
-# GloVe  Weighting function f
-
-![:scale 90%](images/glove_weighting.png)
-???
-If you're larger than X max, it's just weighted by 1. If all
-words appear at least 100 times then the loss is weighted
-fully and if words appear less than 100 times, then you take
-x divided by 100 to the power of alpha, and they found alpha
-equal to 0.75. So it works better than linear.
-
-So in the beginning, you have to compute this big sparse
-matrix once, but then you can do gradient descent just on
-this given statistics.
-
----
-# Word analogies
-
-.center[
-![:scale 45%](images/word_analogies.png)
-]
-
-???
-
-Comparison of CBOW, SGD, skip-gram and Glove on
-the semantic (ie. state→capital) and syntactic (ie
-singular→ plural) word analogy tasks
-
----
 class: center, middle
 
-# (Stochastic) Gradient Descent
+# Transformer-based feature extraction
+BERT, GPT2, ...
+Bi-directional language models:
+Using context + word order!
 
-( see http://leon.bottou.org/projects/sgd
-and http://leon.bottou.org/papers/bottou-bousquet-2008
-and http://scikit-learn.org/stable/modules/scaling_strategies.html )
-
-???
-The last thing I want to talk about today is Stochastic
-Gradient Descent. This is just another solver to solve
-linear models or neural networks. But it's good to
-understand a little bit more in detail because it comes up a
-lot in particular with very large data sets.
-
----
-
-# Reminder: Gradient Descent
-
-.right-column[
-.padding-top[
-![:scale 100%](images/gradient_descent.png)
-]]
-
-Want: $$\arg \min_w F(w)$$
-
-Initialize $w_0$
-
-$$w^{(i+1)} \leftarrow w^{(i)} - \eta_i\frac{d}{dw}F(w^{(i)})$$
-
-Converges to local minimum
-
-???
-First, let's talk about Gradient Descent. So we have some
-function we want to minimize here the function is Lasso
-training data set plus the regularizer. F is the objective
-of the model and I want to find the best parameter setting
-w. The way gradient descent works are that we initialize it
-with some W and then we compute a gradient then we walk down
-the gradient by a small step. This converges to a local
-minimum in the function. For linear models, there's only one
-global minimum. Basically, any optimization algorithm you
-can think of will always converge to the same solution, they
-only converge at different speeds.
-
-Severely stolen from
-https://hackernoon.com/dl03-gradient-descent-719aff91c7d6
-
-fixme!!
-
----
-
-# Reminder: Gradient Descent
 
 .center[
-![:scale 40%](images/gradient_branin.png)
+![:scale 60%](images/bert_high_level.png)
 ]
 
-$$w^{(i+1)} \leftarrow w^{(i)} - \eta_i\frac{d}{dw}F(w^{(i)})$$
-
-
-???
-
+Huge compute effort and training data (multiple days on TPUs)
 
 ---
+# Sentiment analysis using  ![](images/huggingface_logo.svg)
 
-# Pick a learning rate
+Off-the-shelf model on aclImdb (GPU suggested)
 
-.center[
-![:scale 90%](images/branin_learning_rate.png)
-]
+```python
+from transformers import pipeline
 
-$$w^{(i+1)} \leftarrow w^{(i)} - \eta_i\frac{d}{dw}F(w^{(i)})$$
+nlp = pipeline("sentiment-analysis")
 
-???
-A little bit of an issue here is picking a learning rate
-which is how big a step are you making. If you make too
-small a step, then you're going to get stuck wherever you're
-started. If you pick the right step size, you can make very
-quick progress. If you pick too a big step size, you're
-going to be missing the target and just jumping around the
-target. This is a very simple optimizer. But it's not great
-and it’s not very fast because you need to compute gradients
-over the whole dataset. What you can do instead is you can
-approximate a gradient by looking only a single data point
-at a time.
-
+res = [nlp(t.decode()) for t in text_val]
+```
+```
+# my laptop couldn't handle it
+```
 
 ---
-class: compact
-# Batch vs stochastic optimization
+# BERT for feature extraction
 
-Batch
-`$$ W_i \leftarrow W_i - \eta\sum\limits_{j=1}^N \frac{\partial l(x_j,y_j)}{\partial W_i} $$`
-<br />
---
+```python
+from transformers import pipeline
 
-Online/Stochastic
-`$$ W_i \leftarrow W_i - \eta\frac{\partial l(x_j,y_j)}{\partial W_i}$$`
-<br />
+nlp = pipeline("feature-extraction")
 
---
+X_train = [nlp(t.decode() for t in text_train]
+```
+Use similar to word vectors (can train logistic regression etc)
 
-Minibatch
-`$$ W_i \leftarrow W_i - \eta\sum\limits_{j=k}^{k+m} \frac{\partial l(x_j,y_j)}{\partial W_i}$$`
+Better: fine tuning (later in the semester?)
 
-
-???
-So doing standard gradient descent, we would update a weight
-matrix W_i but using the old W_i and taking a gradient step,
-so subtracting the gradient of the loss wrt the paramters,
-summed over the whole training set, times some learning
-rate. The problem with this is that it's quite slow.
-Computing all these gradients means that we need to pass all
-the examples forward through the network, make predictions,
-and then do a backward pass with backpropagation. That's a
-lot of matrix multiplications to do a single gradient step,
-in particular given that we want to do this for very large
-datasets. So what we can do to speed this up is doing a
-stochastic approximation, as we already saw for linear
-models, doing stochastic gradient descent aka online
-gradient descent. Here, you pick a sample at random, compute
-the gradient just considering that sample, and then update
-the parameter. So you update the weights much more often,
-but you have a much less stable estimate of the gradient. In
-practice, we often just iterate through the data instead of
-picking a sample at random. And as with linear models, this
-is much faster than doing full batches for large datasets.
-
-However, it's less stable, and also it doesn't necessarily
-use the hardware in the best way. So we can do a compromise
-in where we look at mini-batches of size k, usually
-something like 64 or 512. So we look at k samples, compute
-the gradients, average them, and update the weights. That
-allows us to update much more often than looking at the
-whole dataset, while still having a more stable gradient,
-and better being able to use the parallel computing
-capabilities of modern CPUs and GPUs. This is what's used in
-practice basically always. The reason why this is faster is
-basically that doing a matrix-matrix multiplication is
-faster than doing a bunch of matrix-vector operations.
-
-In principle we could also be using smarter optimization
-methods, like second order methods or LBFGS, but these are
-often not very effective on these large non-convex problems.
-One, called levenberg-marquardt is actually a possibility,
-but it's not really used these days.
----
-# Stochastic Gradient Descent
-
-- Logistic Regression:
-
-`$$F(w) = -C \sum_{i=1}^n\log(\exp(-y_iw^T \textbf{x}_i) +1 ) + ||w||_2^2$$`
-
-
-- Pick $x_i$ randomly, then
-
-`$$\frac{d}{dw}F(w) = \frac{d}{dw} -C \log(\exp(-y_iw^T \textbf{x}_i) +1 ) + \frac{1}{n}||w||_2^2$$`
-
-- In practice: just iterate over i.
-
-
-???
-Looking at the Logistic Regression, the functional Logistic
-Regression we want to minimize is the log loss plus the
-regularizer. Instead of looking at the gradient for the
-whole sum here, we can get a stochastic approximation of the
-gradient by looking at only one of the sums at a time. In
-practice, we iterate over the dataset and go one by one
-through all the data points. We make sure we shuffle them
-before. Then we do small gradient steps. This is a very bad
-optimizer compared to the SAG but it can go very quickly
-over a lot of data.
-
----
-class: spacious
-
-# SGD and partial_fit
-
-- SGDClassifier(), SGDRegressor() fast on very large datasets
-- Tuning learning rate and schedule can be tricky.
-- partial_fit allows working with out-of-memory data!
-
-
-???
-This is implemented in SGD classifier, and SGD regressor and
-you can use it in very large data sets. It's a little bit
-tricky to tune the learning rate and so you can either pick
-as constant learning rate, or you can pick an exponentially
-decreasing learning rate. There's one that's called optimal.
-If you scale your data to standard division 1, then the
-optimal one will often work well but it's not actually
-optimal on any sense. This will allow you to give you
-something quickly on a big data set. There's also another
-thing you can do, there's a method called partial_fit that
-these models have which allows you to iteratively fit feed
-it data. If you have like streaming data coming in and you
-having infinite data, you can just keep giving it more and
-more data called partial_fit. This method will update the
-model. In scikit-learn, if you call fit multiple times it
-will always forget whatever it saw before. Each fit resets
-the model while partial fit will remember what it saw before
-and keeps fitting the model. SGDClassifier() and
-SGDRegressor both have a whole bunch of different loss
-function penalties so they both can do elastic net penalty
-and the classifier can do logistic loss and hinge loss and
-squared hinge loss and the regressor can do Huber loss and
-squared error and absolute error. So there are many, many
-different choices for different loss functions.
-
-
----
-class: center, spacious
-
-![:scale 90%](images/sgd_partial_fit.png)
-
-![:scale 90%](images/sgd_partial_fit2.png)
-
-
-
-???
-Fit works just like everywhere else. Partial fit you can
-call it with different batches of data and this will keep
-fitting the model. One thing that you should keep in mind
-for the classifier is that you need to give it the classes
-at the beginning because it doesn't know how many classes
-there are and at the first time, not all the classes might
-be present in the data you give it to. So you need to
-specify how many classes there are. Partial fit doesn't do
-loops over a dataset. So if you want to use a partial fit,
-and you want to loop over dataset multiple times, you have
-to set the loop yourself. If you loop over a dataset, if you
-do more of gradient descent, then you get better results.
-This code is the same code for all combinations of losses
-and regularizers because it’s very simple to write this
-down.
 ---
 class: middle
 # Questions ?

@@ -436,13 +436,14 @@ for i in neighbors:
     knn = KNeighborsClassifier(n_neighbors=i)
     knn.fit(X_train, y_train)
     val_scores.append(knn.score(X_val, y_val))
-print("best validation score: {:.3f}".format(np.max(val_scores)))
+print(f"best validation score: {np.max(val_scores):.3}")
 best_n_neighbors = neighbors[np.argmax(val_scores)]
 print("best n_neighbors:", best_n_neighbors)
 
 knn = KNeighborsClassifier(n_neighbors=best_n_neighbors)
 knn.fit(X_trainval, y_trainval)
-print("test-set score: {:.3f}".format(knn.score(X_test, y_test)))
+print(f"test-set score: {knn.score(X_test, y_test):.3f}")
+
 ```
 
 ```
@@ -515,20 +516,21 @@ whole training set and evaluate on the test set.
 from sklearn.model_selection import cross_val_score
 
 X_train, X_test, y_train, y_test = train_test_split(X, y)
+
 cross_val_scores = []
 
 for i in neighbors:
     knn = KNeighborsClassifier(n_neighbors=i)
     scores = cross_val_score(knn, X_train, y_train, cv=10)
     cross_val_scores.append(np.mean(scores))
-
-print("best cross-validation score: {:.3f}".format(np.max(cross_val_scores)))
+    
+print(f"best cross-validation score: {np.max(cross_val_scores):.3}")
 best_n_neighbors = neighbors[np.argmax(cross_val_scores)]
-print("best n_neighbors:", best_n_neighbors)
+print(f"best n_neighbors: {best_n_neighbors}")
 
 knn = KNeighborsClassifier(n_neighbors=best_n_neighbors)
 knn.fit(X_train, y_train)
-print("test-set score: {:.3f}".format(knn.score(X_test, y_test)))
+print(f"test-set score: {knn.score(X_test, y_test):.3f}")
 ```
 
 ```
@@ -575,16 +577,13 @@ from sklearn.model_selection import GridSearchCV
 X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y)
 
 
-param_grid = {'n_neighbors':  np.arange(1, 15, 2)}
-
-grid = GridSearchCV(KNeighborsClassifier(), param_grid=param_grid,
-                    cv=10, return_train_score=True)
+param_grid = {'n_neighbors':  np.arange(1, 30, 2)}
+grid = GridSearchCV(KNeighborsClassifier(), param_grid=param_grid, cv=10,
+                   return_train_score=True)
 grid.fit(X_train, y_train)
+print(f"best parameters: {grid.best_params_}")
 
-print("best mean cross-validation score: {:.3f}".format(grid.best_score_))
-print("best parameters: {}".format(grid.best_params_))
-
-print("test-set score: {:.3f}".format(grid.score(X_test, y_test)))
+print(f"test-set score: {grid.score(X_test, y_test):.3f}")
 ```
 
 ```

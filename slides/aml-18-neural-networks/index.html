@@ -1042,8 +1042,6 @@ intermediate results and gradient computations.
 
   - Chainer
 
-  - CNTK
-
   - (Theano)
 
 ???
@@ -1149,18 +1147,54 @@ graph, and the actual computation.
 ???
 This is linear regression in TensorFlow. We have a very
 simple 1D regression tasks that I created with Numpy.
+
 ---
-class: spacious
+# PyTorch example
 
-# Great Resources!
+.tiny[
+```python
 
-- https://www.tensorflow.org/tutorials/
+dtype = torch.float
+device = torch.device("cpu")
+# device = torch.device("cuda:0") # Uncomment this to run on GPU
 
-- http://playground.tensorflow.org
+N = 100
 
-- Tensorboard web interface
+# Create random input and output data
+x = torch.randn(N, 1, device=device, dtype=dtype)
+y = torch.randn(N, 1, device=device, dtype=dtype)
 
-???
+# Randomly initialize weights
+w = torch.randn(D_in, H, device=device, dtype=dtype)
+
+learning_rate = 1e-6
+for t in range(500):
+    # Forward pass: compute predicted y
+    y_pred = x.mm(w1)
+
+    # Compute and print loss
+    loss = (y_pred - y).pow(2).sum().item()
+    if t % 100 == 99:
+        print(t, loss)
+
+    # Backprop to compute gradients of w1 and w2 with respect to loss
+    loss.backward()
+
+    # Update weights using gradient descent
+    w1 -= learning_rate * w1.grad
+    w1.grad.zero_()
+
+```
+]
+
+---
+# Don't go down to the metal unless you have to!
+
+Don't write TensorFlow, write Keras!
+
+Don't write PyTorch, write pytorch.nn or FastAI (or Skorch or ignite)
+
+
 ---
 
 

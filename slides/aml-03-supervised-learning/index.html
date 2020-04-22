@@ -581,8 +581,8 @@ param_grid = {'n_neighbors':  np.arange(1, 30, 2)}
 grid = GridSearchCV(KNeighborsClassifier(), param_grid=param_grid, cv=10,
                    return_train_score=True)
 grid.fit(X_train, y_train)
+print(f"best mean cross-validation score: {grid.best_score_}")
 print(f"best parameters: {grid.best_params_}")
-
 print(f"test-set score: {grid.score(X_test, y_test):.3f}")
 ```
 
@@ -714,9 +714,10 @@ class: compact
 .center[
 ![:scale 90%](images/stratified_cv.png)
 ]
+.smallest[
 Stratified:
 Ensure relative class frequencies in each fold reflect relative class
-frequencies on the whole dataset.
+frequencies on the whole dataset.]
 
 ???
 The idea behind stratified k-fold cross-validation is that you want the
@@ -993,8 +994,8 @@ res = cross_validate(KNeighborsClassifier(), X, y, return_train_score=True,
                      scoring=["accuracy", "roc_auc"])
 res_df = pd.DataFrame(res)
 ```
-```
 
+```
 fit_time	score_time	test_accuracy	test_roc_auc	train_accuracy	train_roc_auc
 0.000839	0.010204    0.965217	    0.996609	    0.980176	    0.997654
 0.000870	0.014424    0.956522	    0.983689	    0.975771	    0.998650

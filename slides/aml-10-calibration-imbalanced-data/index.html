@@ -31,6 +31,7 @@ Today we’ll talk about working with imbalanced data. We
 already talked about how accuracy is a bad measure and what
 are the other measures we can use.
 
+FIXME in calibration: make sure we have p(y=1) not p(y)?
 FIXME what are the bins for calibration in first slide
 FIXME write down definition for calibration
 FIXME alpha value for curves
@@ -1471,13 +1472,10 @@ class: spacious
 
 # Summary
 
-- Always check roc_auc and AP, look at curves
+- Always check roc_auc and average_precision look at curves
 - Undersampling is very fast and can help!
-- Undersampling + Ensembles worth a try.
-- Many smart sampling strategies, mixed outcomes
-- SMOTE allows adding new interpolated samples
-- Mixed outcomes with SMOTE, also definition a bit unclear
-- More advanced variants of SMOTE available
+- Undersampling + Ensembles is very powerful!
+- Can add synthetic samples with SMOTE
 
 ???
 Always check the ROC AUC and the average precision and look
@@ -1491,15 +1489,6 @@ if you get 100 times to speed up, it's still worth it.
 Using undersampling with easy ensembles is as fast as
 undersampling, but often gives better results.
 
-There are many variants of SMOTE and people often combined
-SMOTE with the pruning strategies. So they prune data
-points, and they add more data points and then remove them
-and add more points and so on. SMOTE seems to be the only
-strategy that kind of works in practice, apart from the
-under-sampling and easy ensembles.
-
-The methods that people actually use are kind of limited and
-unfortunately, also the benchmarks are kind of limited.
 
 People in machine learning research like balance datasets,
 but in the real world data sets are never balanced.

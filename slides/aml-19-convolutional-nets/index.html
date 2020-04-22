@@ -28,8 +28,11 @@ HW: don't commit cache! Don't commit data!
 Most <1mb, some 7gb.
 Say something about GPUs.
 
-FIXME needs much better explanation for convolution and padding strategies
-FIXME explain or define "feature map"
+
+FIXME rerun to see if everything  still works
+FIXME retrain mnist on bigger network, make sure later slides reflect network we trained before
+FIXME needs much better explanation for padding strategies
+FIXME explain or define "feature map" -> needs image etc!! huge problem!
 FIXME explain several filters being connected to same output map
 FIXME mention that CNNs have few weights, lots of activations
 FIXME add explanation of convolution as matrix multiplication, relation to weight sharing
@@ -51,7 +54,6 @@ FIXME better explanation for change of size in valid convolution, put formula on
 FIXME explain number of parameters in convolutional layers
 FIXME call to summary shows too many params? weird?
 FIXME explain weight sharing by writing convolution as matrix multiplication
-FIXME what do we call "parameters"
 ---
 class:center,middle
 #Introduction to Keras
@@ -782,191 +784,6 @@ X_test_perm = X_test.reshape(-1, 784)[:, perm].reshape(-1, 28, 28)
 ]
 ![:scale 90%](images/mnist_permuted.png)
 ---
-# Fully Connected vs Convolutional
-.tiny[
-.left-column[
-```python
-model = Sequential([
-    Dense(512, input_shape=(784,), activation='relu'),
-    Dense(10, activation='softmax'),
-])
-model.compile("adam", "categorical_crossentropy",
-              metrics=['accuracy'])
-```
-```
-_____________________________________________________
-Layer (type)          Output Shape         Param #
-=====================================================
-dense_7 (Dense)       (None, 512)           401920
-_____________________________________________________
-dense_8 (Dense)       (None, 10)            5130
-=====================================================
-Total params: 407,050
-Trainable params: 407,050
-_____________________________________________________
-```
-]
-]
---
-
-.tiny[
-.right-column[
-```python
-num_classes = 10
-cnn = Sequential()
-cnn.add(Conv2D(32, kernel_size=(3, 3),
-               activation='relu',
-               input_shape=input_shape))
-cnn.add(MaxPooling2D(pool_size=(2, 2)))
-cnn.add(Conv2D(32, (3, 3), activation='relu'))
-cnn.add(MaxPooling2D(pool_size=(2, 2)))
-cnn.add(Flatten())
-cnn.add(Dense(64, activation='relu'))
-cnn.add(Dense(num_classes, activation='softmax'))
-```
-```
-_________________________________________________________________
-Layer (type)                 Output Shape              Param #
-=================================================================
-conv2d_1 (Conv2D)            (None, 26, 26, 32)        320
-_________________________________________________________________
-max_pooling2d_1 (MaxPooling2 (None, 13, 13, 32)        0
-_________________________________________________________________
-conv2d_2 (Conv2D)            (None, 11, 11, 32)        9248
-_________________________________________________________________
-max_pooling2d_2 (MaxPooling2 (None, 5, 5, 32)          0
-_________________________________________________________________
-flatten_1 (Flatten)          (None, 800)               0
-_________________________________________________________________
-dense_9 (Dense)              (None, 64)                51264
-_________________________________________________________________
-dense_10 (Dense)             (None, 10)                650
-=================================================================
-Total params: 61,482
-Trainable params: 61,482
-_________________________________________________________________
-```
-]
-
-]
----
-# Training curves
-
-.left-column[
-## Original Data
-
-![:scale 90%](images/mnist_org_curve.png)
-
-]
---
-.right-column[
-## Shuffled Data
-
-![:scale 90%](images/mnist_perm_curve.png)
-]
-
-Any algorithm that doesn't take 2d layout into account is invariant to shuffling of pixels!
-(including anything in sklearn!)
----
-# Data Augmentation
-
-- Rotation
-- Random crops
-- Mirroring
-- ...
----
-class: center, middle
-# Interpreting Neural Networks
----
-# Deconvolution
-.center[
-![:scale 100%](images/deconvolution_1.png)
-]
-https://www.cs.nyu.edu/~fergus/papers/zeilerECCV2014.pdf
-???
-If you do it on natural images, you get something like this.
-This is one of the standard neural networks trained on image
-net dataset.
-
-So you can look at the filters in the input layer and
-because they're in image space, you can just visualize them.
-Here, this network has 9 filters in the first layer. If you
-look at the higher layers, if you want to see the filters,
-it's kind of hard, because they don't work on the input
-space, they work on the space created by these filters. But
-you can kind of try to project them down into the original
-image. And if you do that, then you get something like
-these. So this is sort of a visualization of what the second
-layer learned, this is sort of what they try to detect in
-the input. And for each of these, here, you can see the
-patches in the training set that most corresponded to them.
-
----
-class: center, middle
-
-![:scale 100%](images/deconvolution_2.png)
-
-???
-The goal is that with each layer going up, it learns more
-and more abstract things. And so these are different units
-in the dataset and what they correspond to.
-
-This network learned to detect people even though there’s no
-person class in image net.
-
----
-class: center, middle
-
-
-![:scale 100%](images/deconvolution_3.png)
-
-???
-If you go even deeper into the network, you can see that the
-units correspond to even more abstract things.
-
-These are all learned for the class of image classification.
-So this was just trained on the output, there was no
-information about the location of anything in the image, it
-was just trained. The dogs in these images are of different
-breeds and different vehicles, and so on. So there was never
-any location information in the training, but it's still
-picked up a lot of things.
----
-class: middle
-![:scale 100%](images/distill-feature-vis.png)
-
-.smaller[https://distill.pub/2017/feature-visualization/]
-???
-This is a paper on feature visualization in neural networks.
-This is from Google net, also trained on the same set as
-image net. What they’re doing is they’re taking the network,
-they’re fixing the activation in a particular feature map
-and then they do backpropagation through the network to
-adjust the input image so that this particular feature map
-is most activated. This way, you want to create an image
-that activates this particular feature map or particular
-filter the most.
-
-This is one of the papers in a series of papers about how to
-restrict gradient descent on the input image to get some
-nice outputs.
-
-These are deeper into the network. In the beginning, it’s
-like edges of different frequencies and orientations, then
-you get something like textures, which are already quite
-rich, and then you get the larger textures, and then you get
-sort of more object like things and if you go further up,
-you get something that is very close to object.
-
-This sort of allows you to try to understand what the higher
-layers of these networks detect and it's quite interesting
-because a lot of these become quite specific. And this is
-all learned in a completely supervised way so the only
-feedback that the model got was learning to label these
-images correctly. But we get very fine-grained features in
-the network.
----
-
 class: middle
 # Questions ?
 

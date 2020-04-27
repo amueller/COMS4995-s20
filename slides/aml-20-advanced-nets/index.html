@@ -24,19 +24,28 @@ class: center, middle
 Andreas C. Müller
 
 ???
-drive home point about permuting pixels in imaged doesn't affect dense networks (or RF, or SVM)
-
+FIXME add model inspection?
+FIXME add attention
+FIXME VGG images low res
 FIXME update with state-of-the-art instead of VGG16
-FIXME data augmentation before dropout!
-FIXME show how permuting pixels doesn't affect fully connected network,
-but does affect convolutional network
 FIXME my resnet is broken
 FIXME add finetuning with keras example
-FIXME write down why residual is called residual? g(x) = f(x) + x ?
-FIXME new convnet architectures? Amobea
-FIXME y_i in batch normalization confusing.
 FIXME dropout: make clear different for every sample in batch
 FIXME residual connections: plot the graph for the network I'm running
+---
+# MNIST and Permuted MNIST
+![:scale 90%](images/mnist_org.png)
+.smallest[
+
+```python
+rng = np.random.RandomState(42)
+perm = rng.permutation(784)
+X_train_perm = X_train.reshape(-1, 784)[:, perm].reshape(-1, 28, 28)
+X_test_perm = X_test.reshape(-1, 784)[:, perm].reshape(-1, 28, 28)
+```
+
+]
+![:scale 90%](images/mnist_permuted.png)
 ---
 # Fully Connected vs Convolutional
 .tiny[
@@ -124,12 +133,54 @@ _________________________________________________________________
 Any algorithm that doesn't take 2d layout into account is invariant to shuffling of pixels!
 (including anything in sklearn!)
 ---
+![:scale 35%](images/carpet_snake.png)
+--
+<br />
+![:scale 22%](preview/snek_0_1271.jpeg)
+![:scale 22%](preview/snek_0_3411.jpeg)
+![:scale 22%](preview/snek_0_4863.jpeg)
+![:scale 22%](preview/snek_0_5876.jpeg)
+![:scale 22%](preview/snek_0_9549.jpeg)
+![:scale 22%](preview/snek_0_4484.jpeg)
+![:scale 22%](preview/snek_0_6377.jpeg)
+![:scale 22%](preview/snek_0_4599.jpeg)
+
+---
 # Data Augmentation
 
 - Rotation
 - Random crops
 - Mirroring
 - ...
+
+Make sure these reflect realistic and relevant variability!
+
+---
+class: smaller
+# Image data augmentation with Keras
+
+## https://keras.io/preprocessing/image/
+
+```python
+datagen = ImageDataGenerator(
+    featurewise_center=True,
+    featurewise_std_normalization=True,
+    rotation_range=20,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    horizontal_flip=True)
+
+# compute quantities required for featurewise normalization
+# (std, mean, and principal components if ZCA whitening is applied)
+datagen.fit(x_train)
+
+# fits the model on batches with real-time data augmentation:
+model.fit_generator(datagen.flow(x_train, y_train, batch_size=32),
+                    steps_per_epoch=len(x_train) / 32, epochs=epochs)
+```
+.smaller[
+Also check [``flow_from_directory``](https://keras.io/preprocessing/image/).
+]
 ---
 class: center, middle
 # Interpreting Neural Networks
@@ -221,7 +272,6 @@ all learned in a completely supervised way so the only
 feedback that the model got was learning to label these
 images correctly. But we get very fine-grained features in
 the network.
----
 
 ---
 class: middle
@@ -430,6 +480,37 @@ often gives better results.
 The idea here is that you want the hidden units to be scaled
 well. So what this does is kind of trying to scale hidden
 units to zero mean unit variance and doing this per batch.
+---
+# Problem
+![:scale 90%](images/resnet-no-deep-nets.png)
+???
+We can't fit deep networks well - not even on training set!
+"vanishing gradient problem" - was motivation for relu, but not solved yet.
+
+
+The deeper the network gets, usually the performance gets
+better. But if you make your network too deep, then you
+can't learn it anymore.
+
+This is on CIFAR-10, which is a relatively small dataset.
+But if you try to learn a 56-layer convolutional, you cannot
+even optimize it on the training set. So basically, it's not
+that we can't generalize, we can't optimize. So these are
+universal approximators, so ideally, we should be able to
+overfit completely the training set.
+
+But here, if we make it too deep, we cannot overfit the
+training set anymore. It's kind of a bad thing. Because we
+can’t really optimize the problem. So this is sort of
+connected to this problem of vanishing gradient that it's
+very hard to backpropagate the error through a very deep net
+because basically, the idea is that the further you get from
+the output, the gradients become less and less informative.
+We talked about RELU units, which sort of helped to make
+this a little bit better. Without RELU units, you had like 4
+or 5 layers, with RELU units, you have like 20 layers. But
+if you do 56 layers, it's not going to work anymore.
+
 
 ---
 #Batch Normalization
@@ -503,10 +584,6 @@ FIXME label axes
 Here's the same thing with a larger network where we have 64
 filters instead of 8. This learns even faster and learns to
 overfit really well.
-
----
-class: middle
-# Residual Neural Networks
 ---
 # Problem
 ![:scale 90%](images/resnet-no-deep-nets.png)
@@ -542,16 +619,23 @@ Even it's not going to work anymore, even on the training
 set. So this has been like a big problem. And it has a
 surprisingly simple solution, which is the RES-NET layer.
 
+
+---
+class: middle
+# Residual Neural Networks
 ---
 class: center
 # Solution
-![:scale 60%](images/residual-layer.png)
+![:scale 50%](images/residual-layer.png)
 
-`$$y = F(x, \{W_i\}) + x  \quad \text{ for same size layers}$$`
+`$$\text{out} = F(x, \{W_i\}) + x  \quad \text{ for same size layers}$$`
 
 --
 
-`$$y = F(x, \{W_i\}) + W_sx \quad \text{ for different size layers}$$`
+`$$\text{out} = F(x, \{W_i\}) + W_sx \quad \text{ for different size layers}$$`
+--
+
+`$$F(x) = \text{out} - x \quad \text{learing the residual}$$`
 
 ???
 instead of learning a function. learn the difference to identity.
@@ -634,8 +718,9 @@ class: center
 
 --
 
-This was Dec 2015. Current SOTA: 15.7% top-1 error
+This was Dec 2015. Current state-of-the-art: 11.5% top-1 error
 https://paperswithcode.com/sota/image-classification-on-imagenet
+(and this is less relevant as benchmark)
 
 ???
 uses batch normalization and dropout.
@@ -733,6 +818,7 @@ _________________________________________________________________
 ]
 
 ---
+class: compact
 # Adding Skip connections
 .tiny[
 .left-column[
@@ -762,97 +848,206 @@ model = Model(inputs=inputs, outputs=predictions)
 ```
 ]
 .right-column[
+.tiniest[
 ```
-__________________________________________________________________________________________________
+_________________________________________________________________________________________
 Layer (type)                    Output Shape         Param #     Connected to
-==================================================================================================
+=========================================================================================
 input_14 (InputLayer)           (None, 28, 28, 1)    0
-__________________________________________________________________________________________________
+_________________________________________________________________________________________
 conv2d_57 (Conv2D)              (None, 28, 28, 32)   320         input_14[0][0]
-__________________________________________________________________________________________________
+_________________________________________________________________________________________
 conv2d_58 (Conv2D)              (None, 28, 28, 32)   9248        conv2d_57[0][0]
-__________________________________________________________________________________________________
+_________________________________________________________________________________________
 max_pooling2d_23 (MaxPooling2D) (None, 14, 14, 32)   0           conv2d_58[0][0]
-__________________________________________________________________________________________________
+_________________________________________________________________________________________
 conv2d_59 (Conv2D)              (None, 14, 14, 32)   9248        max_pooling2d_23[0][0]
-__________________________________________________________________________________________________
+_________________________________________________________________________________________
 conv2d_60 (Conv2D)              (None, 14, 14, 32)   9248        conv2d_59[0][0]
-__________________________________________________________________________________________________
+_________________________________________________________________________________________
 add_11 (Add)                    (None, 14, 14, 32)   0           max_pooling2d_23[0][0]
                                                                  conv2d_60[0][0]
-__________________________________________________________________________________________________
+_________________________________________________________________________________________
 max_pooling2d_24 (MaxPooling2D) (None, 7, 7, 32)     0           add_11[0][0]
-__________________________________________________________________________________________________
+_________________________________________________________________________________________
 flatten_14 (Flatten)            (None, 1568)         0           max_pooling2d_24[0][0]
-__________________________________________________________________________________________________
+_________________________________________________________________________________________
 dense_35 (Dense)                (None, 64)           100416      flatten_14[0][0]
-__________________________________________________________________________________________________
+_________________________________________________________________________________________
 dense_36 (Dense)                (None, 10)           650         dense_35[0][0]
-==================================================================================================
+=========================================================================================
 Total params: 129,130
 Trainable params: 129,130
 Non-trainable params: 0
-__________________________________________________________________________________________________
+_________________________________________________________________________________________
 ```
 ]
 ]
-
----
-class: middle, center
-# Densely Connected Convolutional Networks (DenseNet)
-[Huang et. al - Densely Connected Convolutional Networks (2016)](https://arxiv.org/pdf/1608.06993)
-???
-DenseNet tries to solve a similar problem in trying to learn
-deeper networks. But the approach they take is somewhat
-different.
----
-class: center
-![:scale 60%](images/densenet-architecture.png)
-???
-Previously we had each layer connected to the layer before
-it. In DenseNet, each layer is connected to all the layers
-before it.
-
-This allows the last layer to be connected to the input and
-the output in a more direct way. The hope is that you can
-learn more easily. But since these are all convolutions,
-this only works if they have the same size.
-
---
-![:scale 80%](images/densenet-architecture2.png)
-???
-So basically, they added dense blocks into the convolutional
-network. And then between the dense blocks is convolutional
-pooling to basically reduce the dimension. The connections
-between the convolutional layers are not just only the next
-one but all other convolutional layers.
----
-class: center, middle
-![:scale 70%](images/densenet-vs-resnet.png)
-
-???
-uses batch normalization and dropout.
-
-These networks get even better than ResNet. If you make the
-network bigger and bigger, error drops down. But DenseNet
-gets the same accuracy with three times fewer parameters.
-And if you add parameters or layers, it gets even better.
-
-One of the reasons why you might be interested in parameters
-is because you need to store them, which means you need
-bigger GPUs. And if you want to do prediction, it takes
-longer, because you need to compute more.
-
-So they also showed a graph of computation, and DenseNet
-basically computes quite a bit faster than ResNet.
-
-If you're interested in this kind of architectures, you
-should also look up Inception.
+]
 
 ---
 class: center, middle
-![:scale 90%](images/pretrained-nets-in-keras.png)
-https://keras.io/applications/
+
+## https://keras.io/applications/
+
+<table class='alternating'>
+<thead>
+<tr>
+<th align='left'>Model</th>
+<th align="right">Size</th>
+<th align="right">Top-1 Accuracy</th>
+<th align="right">Top-5 Accuracy</th>
+<th align="right">Parameters</th>
+<th align="right">Depth</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align='left'><a href="#xception">Xception</a></td>
+<td align="right">88 MB</td>
+<td align="right">0.790</td>
+<td align="right">0.945</td>
+<td align="right">22,910,480</td>
+<td align="right">126</td>
+</tr>
+<tr>
+<td align='left'><a href="#vgg16">VGG16</a></td>
+<td align="right">528 MB</td>
+<td align="right">0.713</td>
+<td align="right">0.901</td>
+<td align="right">138,357,544</td>
+<td align="right">23</td>
+</tr>
+<tr>
+<td align='left'><a href="#vgg19">VGG19</a></td>
+<td align="right">549 MB</td>
+<td align="right">0.713</td>
+<td align="right">0.900</td>
+<td align="right">143,667,240</td>
+<td align="right">26</td>
+</tr>
+<tr>
+<td align='left'><a href="#resnet">ResNet50</a></td>
+<td align="right">98 MB</td>
+<td align="right">0.749</td>
+<td align="right">0.921</td>
+<td align="right">25,636,712</td>
+<td align="right">-</td>
+</tr>
+<tr>
+<td align='left'><a href="#resnet">ResNet101</a></td>
+<td align="right">171 MB</td>
+<td align="right">0.764</td>
+<td align="right">0.928</td>
+<td align="right">44,707,176</td>
+<td align="right">-</td>
+</tr>
+<tr>
+<td align='left'><a href="https://keras.io/applications/#resnet">ResNet152</a></td>
+<td align="right">232 MB</td>
+<td align="right">0.766</td>
+<td align="right">0.931</td>
+<td align="right">60,419,944</td>
+<td align="right">-</td>
+</tr>
+<tr>
+<td align='left'><a href="https://keras.io/applications/#resnet">ResNet50V2</a></td>
+<td align="right">98 MB</td>
+<td align="right">0.760</td>
+<td align="right">0.930</td>
+<td align="right">25,613,800</td>
+<td align="right">-</td>
+</tr>
+<tr>
+<td align='left'><a href="https://keras.io/applications/#resnet">ResNet101V2</a></td>
+<td align="right">171 MB</td>
+<td align="right">0.772</td>
+<td align="right">0.938</td>
+<td align="right">44,675,560</td>
+<td align="right">-</td>
+</tr>
+<tr>
+<td align='left'><a href="https://keras.io/applications/#resnet">ResNet152V2</a></td>
+<td align="right">232 MB</td>
+<td align="right">0.780</td>
+<td align="right">0.942</td>
+<td align="right">60,380,648</td>
+<td align="right">-</td>
+</tr>
+<tr>
+<td align='left'><a href="https://keras.io/applications/#inceptionv3">InceptionV3</a></td>
+<td align="right">92 MB</td>
+<td align="right">0.779</td>
+<td align="right">0.937</td>
+<td align="right">23,851,784</td>
+<td align="right">159</td>
+</tr>
+<tr>
+<td align='left'><a href="https://keras.io/applications/#inceptionresnetv2">InceptionResNetV2</a></td>
+<td align="right">215 MB</td>
+<td align="right">0.803</td>
+<td align="right">0.953</td>
+<td align="right">55,873,736</td>
+<td align="right">572</td>
+</tr>
+<tr>
+<td align='left'><a href="https://keras.io/applications/#mobilenet">MobileNet</a></td>
+<td align="right">16 MB</td>
+<td align="right">0.704</td>
+<td align="right">0.895</td>
+<td align="right">4,253,864</td>
+<td align="right">88</td>
+</tr>
+<tr>
+<td align='left'><a href="https://keras.io/applications/#mobilenetv2">MobileNetV2</a></td>
+<td align="right">14 MB</td>
+<td align="right">0.713</td>
+<td align="right">0.901</td>
+<td align="right">3,538,984</td>
+<td align="right">88</td>
+</tr>
+<tr>
+<td align='left'><a href="https://keras.io/applications/#densenet">DenseNet121</a></td>
+<td align="right">33 MB</td>
+<td align="right">0.750</td>
+<td align="right">0.923</td>
+<td align="right">8,062,504</td>
+<td align="right">121</td>
+</tr>
+<tr>
+<td align='left'><a href="https://keras.io/applications/#densenet">DenseNet169</a></td>
+<td align="right">57 MB</td>
+<td align="right">0.762</td>
+<td align="right">0.932</td>
+<td align="right">14,307,880</td>
+<td align="right">169</td>
+</tr>
+<tr>
+<td align='left'><a href="https://keras.io/applications/#densenet">DenseNet201</a></td>
+<td align="right">80 MB</td>
+<td align="right">0.773</td>
+<td align="right">0.936</td>
+<td align="right">20,242,984</td>
+<td align="right">201</td>
+</tr>
+<tr>
+<td align='left'><a href="https://keras.io/applications/#nasnet">NASNetMobile</a></td>
+<td align="right">23 MB</td>
+<td align="right">0.744</td>
+<td align="right">0.919</td>
+<td align="right">5,326,716</td>
+<td align="right">-</td>
+</tr>
+<tr>
+<td align='left'><a href="https://keras.io/applications/#nasnet">NASNetLarge</a></td>
+<td align="right">343 MB</td>
+<td align="right">0.825</td>
+<td align="right">0.960</td>
+<td align="right">88,949,818</td>
+<td align="right">-</td>
+</tr>
+</tbody>
+</table>
 ???
 Here are all the things that are inside Keras. Inception is
 created by Google by copying from Microsoft. These are

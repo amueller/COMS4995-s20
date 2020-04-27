@@ -69,6 +69,10 @@ font-size: 20px;
 .tiny .remark-code-line, .remark-slide-content .tiny .dataframe, .remark-slide-content span.tiny{
 font-size: 16px;
 }
+.remark-slide-content .tiniest p, .remark-slide-content .tiniest li, .remark-slide-content .tiniest .remark-code,
+.tiniest .remark-code-line, .remark-slide-content .tiniest .dataframe, .remark-slide-content span.tiniest{
+font-size: 12px;
+}
 .normal {
     font-size: 30px;
 }
@@ -155,4 +159,17 @@ background: #f5f5f5;
 }
 table.dataframe tbody tr:hover {
 background: rgba(66, 165, 245, 0.2);
+}
+
+table.alternationg{
+border: none;
+border-collapse: collapse;
+border-spacing: 0;
+
+}
+table.alternating td, table.alternating tr {
+border: none;
+}
+table.alternating tbody tr:nth-child(odd) {
+background: #f0f0f0;
 }

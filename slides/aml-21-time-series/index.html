@@ -44,6 +44,7 @@ FIXME trend modeling part is weird?
 FIXME generally weird order?
 FIXME new AR model interface for statsmodels!
 FIXME use AR coefficients as features for classification
+FIXME redo arima model
 
 ---
 class: center, middle
@@ -898,7 +899,7 @@ class: spacious
 
 - Order k AR model (can include trend and offset):
 
-`$$ x_{t+k} = c_0  x_t + c_1 x_{t + 1} + ... + c_{k - 1} x_t $$`
+`$$ x_{t+k} = c_0  x_t + c_1 x_{t + 1} + ... + c_{k - 1} x_{t + k - 1}$$`
 
 - learn $c_i$ (i.e. using least squares)
 

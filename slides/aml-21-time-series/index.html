@@ -42,6 +42,7 @@ FIXME maybe start with sklearn part
 FIXME AR model with trees
 FIXME trend modeling part is weird?
 FIXME generally weird order?
+FIXME new AR model interface for statsmodels!
 
 ---
 class: center, middle
@@ -925,6 +926,8 @@ and pretty simple to implement.
 
 # AR model with statsmodels
 
+## replaced by statsmodels.tsa.AutoReg now!
+
 .left-column[
 .smaller[
 ```python
@@ -1166,7 +1169,7 @@ there’s a somewhat linear trend.
 ```python
 from sklearn.preprocessing import PolynomialFeatures
 lr_poly = make_pipeline(PolynomialFeatures(include_bias=False),
-                          LinearRegression())
+                        LinearRegression())
 lr_poly.fit(X_train, train)
 plt.plot(ppm.index, lr_poly.predict(X))
 ppm.plot()
@@ -1212,72 +1215,13 @@ maybe this will be easier to fit with the autoregressive
 model.
 
 ---
-class: compact
-
-# AR model on residuals
-
-.left-column[
-.smaller[
-```python
-from statsmodels.tsa import ar_model
-ar_model_res = ar_model.AR(y_res[:500])
-res_res = ar_model_res.fit(maxlag=12)
-ar_pred_res = res_res.predict(
-        ppm.index[500], ppm.index[-1])
-pred_ar_res = ar_pred_res +
-              r_poly.predict(X_test)
-res_res.params
-```
-```
-const              -0.008039
-L1.interpolated     0.922508
-L2.interpolated    -0.243015
-L3.interpolated    -0.101173
-L4.interpolated    -0.077538
-L5.interpolated     0.158073
-L6.interpolated    -0.006164
-L7.interpolated    -0.023890
-L8.interpolated    -0.126381
-L9.interpolated     0.092664
-L10.interpolated   -0.025640
-L11.interpolated    0.414180
-L12.interpolated   -0.018078
-dtype: float64
-```
-]
-]
-
-.right-column[
-.center[![:scale 120%](images/ar model residuals.png)]
-
-]
-
-
-???
-FIXME - Note: Couldn't decrease size further
-
-Here, I guess I'm comparing the maxlag 12 with maxlag 24.
-Here the green is the true, the AR predict is the max lag 24
-and ar-res is using the polynomial plus the autoregressive
-model.
-
-Here, it's a little bit worse trying to de-trend with a
-polynomial model, but that's probably just because I gave
-the autoregressive model less lag.
-
-So this was trying to model the trend globally and trying to
-model it locally with the autoregressive model. We could’ve
-also tried to capture the model with a linear regression
-model.
-
----
 
 # Just Linear Regression
 
 .smaller[
 ```python
 X_month = pd.concat([X, pd.DataFrame({'month': X.index.month},index=X.index)],
-		         		axis=1)
+                    axis=1)
 X_month.head()
 ```
 ]
@@ -1287,7 +1231,7 @@ X_month.head()
 X_train_month = X_month[:500]
 X_test_month = X_month[500:]
 lr_poly_month = make_pipeline(PolynomialFeatures(include_bias=False),
-								LinearRegression())
+                              LinearRegression())
 lr_poly_month.fit(X_train_month, train)
 X_test_month.shape # (209,2)
 ```
@@ -1478,7 +1422,7 @@ business decisions on this.
 ---
 # Seasonal Components
 .center[
-![:scale 50%](images/prophet_forecast_components.png)
+![:scale 70%](images/prophet_forecast_components.png)
 ]
 ???
 detected that there are no daily or weekly trends!
@@ -1494,6 +1438,18 @@ that it fitted.
 
 If you have more seasonal trends it will also give you
 weekly and daily patterns.
+---
+# Other libraries
+
+- [sktime](https://alan-turing-institute.github.io/sktime/)
+    - Time series classification
+    - Forecasting
+
+- [tslearn](https://tslearn.readthedocs.io/en/latest/index.html)
+    - Classification
+    - Regression
+    - Clustering
+    - Very active development
 
 ---
 class: spacious

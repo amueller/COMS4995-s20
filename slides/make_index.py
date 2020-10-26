@@ -27,7 +27,7 @@ def main():
     directory = os.getcwd()
     fnames = glob.glob("aml-*")
     fnames.sort()
-    header = "https://amueller.github.io/COMS4995-s19/slides/"
+    header = "https://amueller.github.io/COMS4995-s20/slides/"
     with open("index.html", "w") as f:
         f.write(Template(INDEX_TEMPLATE).render(names=fnames, header=header))
 

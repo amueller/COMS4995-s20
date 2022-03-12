@@ -188,9 +188,9 @@ that the mean is actually zero is small. So then if you
 subtract something from everything, you're going to move all
 those zeros away from zero and then you can't store the data
 in sparse format and your RAM will blow up. Basically, you
-can subtract anything from sparse matrix because that won't
+can't subtract anything from sparse matrix because that won't
 be sparse anymore. But we can still scale it because any
-number of times zero is still zero. So if we scale it, then
+number times zero is still zero. So if we scale it, then
 it will have the same structure again. The MaxAbsScaler sets
 the maximum absolute values to one. Basically, it looks at
 the maximum absolute values in the whole dataset, or for
